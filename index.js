@@ -40,7 +40,8 @@ bot.on("message", async (msg) => {
     const group = getGroupFromMessage(msg.text);
 
     if (group && group.id) {
-      const url = scheduleApi + group.id + "/" + getDate();
+      const currentDate = new Date();
+      const url = scheduleApi + group.id + "/" + getTextDate(currentDate);
       const schedule = await (await fetch(url)).json();
 
       if (schedule && schedule.lessons) {
@@ -63,22 +64,20 @@ bot.on("new_chat_photo", (msg) => {
   bot.sendMessage(msg.chat.id, "nice chat photo 👍");
 });
 
-function getDate() {
-  const currentDate = new Date();
+function getTextDate(date) {
+  let year = date.getFullYear().toString();
 
-  let year = currentDate.getFullYear().toString();
-
-  let month = (currentDate.getMonth() + 1).toString();
+  let month = (date.getMonth() + 1).toString();
   if (month.length == 1) {
     month = "0" + month;
   }
 
-  let date = currentDate.getDate().toString();
-  if (date.length == 1) {
-    date = "0" + date;
+  let day = date.getDate().toString();
+  if (day.length == 1) {
+    day = "0" + day;
   }
 
-  const result = `${year}-${month}-${date}`;
+  const result = `${year}-${month}-${day}`;
 
   return result;
 }
