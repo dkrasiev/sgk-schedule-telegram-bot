@@ -1,4 +1,3 @@
-const { group } = require("console");
 const TelegramApi = require("node-telegram-bot-api");
 
 const token = "5573955751:AAGSxf-p0pd8y_u39b-Hd_9-3RBz1cGTbXw";
@@ -20,7 +19,6 @@ bot.setMyCommands([
   { command: "/start", description: "Включить меня" },
   { command: "/help", description: "Показать помощь" },
   { command: "/groups", description: "Показать все существующие группы" },
-  // { command: "/schedule", description: "Показать расписание на сегодня" },
 ]);
 
 bot.on("message", async (msg) => {
@@ -31,7 +29,7 @@ bot.on("message", async (msg) => {
   } else if (msg.text?.startsWith("/help")) {
     await bot.sendMessage(
       msg.chat.id,
-      "Для получения расписания напишите: \nрасписание <номер группы> <дата (по-умолчанию сегодня)>"
+      "Для получения расписания напишите: \nрасписание <номер группы>"
     );
   } else if (
     msg.text?.startsWith("/schedule") ||
