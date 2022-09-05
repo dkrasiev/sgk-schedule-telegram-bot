@@ -12,7 +12,9 @@ let groups = [];
 fetch(groupsApi)
   .then((response) => response.json())
   .then((groupsResponse) => {
-    groups = groupsResponse.sort((a, b) => a.name.localeCompare(b.name));
+    groups = groupsResponse
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .filter((group) => group.name != "--");
   });
 
 bot.setMyCommands([
@@ -39,7 +41,6 @@ bot.on("message", async (msg) => {
 
     if (group && group.id) {
       const url = scheduleApi + group.id + "/" + getDate();
-      console.log(url);
       const schedule = await (await fetch(url)).json();
 
       if (schedule && schedule.lessons) {
@@ -72,7 +73,7 @@ function getDate() {
     month = "0" + month;
   }
 
-  let date = (currentDate.getDate() + 1).toString();
+  let date = currentDate.getDate().toString();
   if (date.length == 1) {
     date = "0" + date;
   }
@@ -106,12 +107,10 @@ function getMessageSchedule(schedule, group) {
 
 function getGroupFromMessage(message) {
   const regexArr = message.match(/[А-я]{2,3}-?\d{2}-?\d{2}/g);
-  const groupName = regexArr ? regexArr[0] : "";
-
-  console.log(groupName);
+  const groupName = regexArr ? regexArr[0].replaceAll("-").toLowerCase() : "";
 
   const group = groups?.find(
-    (group) => group.name.toLowerCase() == groupName?.toLowerCase()
+    (group) => group.name.toLowerCase().replaceAll("-", "") == groupName
   );
 
   return group;
