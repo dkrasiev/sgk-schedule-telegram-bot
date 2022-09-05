@@ -1,0 +1,11 @@
+{
+  "name": "sgk-schedule-telegram-bot",
+  "version": "1.0.0",
+  "description": "Telegram bot, that shows schedule",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Dmitry Krasiev",
+  "license": "ISC"
+}
