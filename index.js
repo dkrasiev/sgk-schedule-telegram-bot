@@ -105,12 +105,21 @@ function getMessageSchedule(schedule, group) {
 }
 
 function getGroupFromMessage(message) {
-  const regexArr = message.match(/[А-я]{2,3}-?\d{2}-?\d{2}/g);
-  const groupName = regexArr ? regexArr[0].replaceAll("-").toLowerCase() : "";
+  const regexArr = message.match(/[А-я]{2,3}[\W]?\d{2}[\W]?\d{2}/g);
+  const groupName = regexArr
+    ? regexArr[0].replaceAll("-", "").replaceAll(" ", "").toLowerCase()
+    : "";
+
+  console.log(regexArr);
+  console.log(groupName);
 
   const group = groups?.find(
     (group) => group.name.toLowerCase().replaceAll("-", "") == groupName
   );
+
+  if (message == "расписание") {
+    return groups.find((group) => group.name == "ИС-19-04");
+  }
 
   return group;
 }
@@ -132,17 +141,17 @@ function log(message) {
 function numToTime(num) {
   num = num.toString();
   const times = {
-    1: " 08:25-10:00",
-    2: " 10:10-11:45",
-    3: " 12:15-13:50",
-    4: " 14:00-15:35",
-    5: " 15:45-17:20",
-    6: " 17:30-19:05",
-    7: " 19:15-20:50",
-    1.1: " 08:25-09:10",
-    1.2: " 09:15-10:00",
-    2.1: " 10:10-10:55",
-    2.2: " 11:00-11:45",
+    1: "08:25-10:00",
+    2: "10:10-11:45",
+    3: "12:15-13:50",
+    4: "14:00-15:35",
+    5: "15:45-17:20",
+    6: "17:30-19:05",
+    7: "19:15-20:50",
+    1.1: "08:25-09:10",
+    1.2: "09:15-10:00",
+    2.1: "10:10-10:55",
+    2.2: "11:00-11:45",
     3.1: "12:15-13:00",
     3.2: "13:05-13:50",
     4.1: "14:00-14:45",
