@@ -1,4 +1,5 @@
 const TelegramApi = require("node-telegram-bot-api");
+const dayjs = require("dayjs");
 
 const token = "5573955751:AAGSxf-p0pd8y_u39b-Hd_9-3RBz1cGTbXw";
 
@@ -33,29 +34,27 @@ bot.on("message", async (msg) => {
   } else if (msg.text.startsWith("/help")) {
     await bot.sendMessage(
       msg.chat.id,
-      "Для получения расписания напишите: \nрасписание <номер группы>"
+      "Для получения расписания напишите: \nрасписание <номер группы>\nПример номера группы: ис-19-04, ис1904, ис 19 04"
     );
   } else if (
     msg.text.startsWith("/schedule") ||
     msg.text.toLowerCase().includes("расписание")
   ) {
     const group = getGroupFromMessage(msg.text);
-
-    if (group && group.id) {
-      const currentDate = new Date();
-      const url = scheduleApi + group.id + "/" + getTextDate(currentDate);
-      const schedule = await (await fetch(url)).json();
-
-      if (schedule && schedule.lessons) {
-        await bot.sendMessage(msg.chat.id, getMessageSchedule(schedule, group));
-      } else {
-        await bot.sendMessage(msg.chat.id, "Расписание не найдено");
-      }
-    } else {
-      await bot.sendMessage(msg.chat.id, "Группа не найдена");
+    if (!group) {
+      return await bot.sendMessage(msg.chat.id, "Группа не найдена");
     }
+
+    const scheduleToday = await getSchedule(group, dayjs());
+    const scheduleNext = await getSchedule(group, dayjs().add(1, "day"));
+
+    await bot.sendMessage(
+      msg.chat.id,
+      getMessageSchedule(scheduleToday, group)
+    );
+    await bot.sendMessage(msg.chat.id, getMessageSchedule(scheduleNext, group));
   } else if (msg.text.startsWith("/groups")) {
-    bot.sendMessage(msg.chat.id, getMessageAllGroups());
+    await bot.sendMessage(msg.chat.id, getMessageAllGroups());
   } else {
     if (msg.chat.type == "private")
       await bot.sendMessage(msg.chat.id, "Я тебя не понимаю");
@@ -66,43 +65,31 @@ bot.on("new_chat_photo", (msg) => {
   bot.sendMessage(msg.chat.id, "nice chat photo 👍");
 });
 
-function getTextDate(date) {
-  let year = date.getFullYear().toString();
-
-  let month = (date.getMonth() + 1).toString();
-  if (month.length == 1) {
-    month = "0" + month;
-  }
-
-  let day = date.getDate().toString();
-  if (day.length == 1) {
-    day = "0" + day;
-  }
-
-  const result = `${year}-${month}-${day}`;
-
-  return result;
-}
-
 function getMessageAllGroups() {
   return groups.map((group) => group.name).join("\n");
 }
 
 function getMessageSchedule(schedule, group) {
+  if (!schedule) return;
+
   let message = group?.name + "\n" + schedule.date + "\n\n";
 
-  for (let lesson of schedule.lessons) {
-    message +=
-      lesson.num +
-      " " +
-      numToTime(lesson.num) +
-      "\n" +
-      lesson.title +
-      "\n" +
-      lesson.teachername +
-      "\n" +
-      lesson.cab +
-      "\n\n";
+  if (schedule.lessons.length > 0) {
+    for (let lesson of schedule.lessons) {
+      message +=
+        lesson.num +
+        " " +
+        numToTime(lesson.num) +
+        "\n" +
+        lesson.title +
+        "\n" +
+        lesson.teachername +
+        "\n" +
+        lesson.cab +
+        "\n\n";
+    }
+  } else {
+    message += "Расписания нет";
   }
 
   return message;
@@ -165,4 +152,27 @@ function numToTime(num) {
     7.2: "20:05-20:50",
   };
   return times[num];
+}
+
+async function getSchedule(group, date) {
+  console.log(date.day());
+  switch (date.day()) {
+    case 0:
+      date = date.add(1, "day");
+      break;
+    case 6: {
+      date = date.add(2, "day");
+    }
+  }
+
+  const url = scheduleApi + group.id + "/" + date.format("YYYY-MM-DD");
+  const schedule = await (await fetch(url)).json();
+
+  console.log(url);
+
+  if (schedule) {
+    return schedule;
+  }
+
+  return;
 }
