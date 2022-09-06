@@ -18,6 +18,8 @@ npm install
 
 ## Usage
 
+create .env file and add TOKEN_BOT=<your-bot-token>
+
 ```sh
 npm run start
 ```
