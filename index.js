@@ -45,8 +45,13 @@ bot.on("message", async (msg) => {
       return await bot.sendMessage(msg.chat.id, "Группа не найдена");
     }
 
-    const scheduleToday = await getSchedule(group, dayjs());
-    const scheduleNext = await getSchedule(group, dayjs().add(1, "day"));
+    const currentDate = dayjs();
+
+    const firstDate = getDateFrom(currentDate);
+    const secondDate = getDateFrom(firstDate.add(1, "day"));
+
+    const scheduleToday = await getSchedule(group, firstDate);
+    const scheduleNext = await getSchedule(group, secondDate);
 
     await bot.sendMessage(
       msg.chat.id,
@@ -155,16 +160,6 @@ function numToTime(num) {
 }
 
 async function getSchedule(group, date) {
-  console.log(date.day());
-  switch (date.day()) {
-    case 0:
-      date = date.add(1, "day");
-      break;
-    case 6: {
-      date = date.add(2, "day");
-    }
-  }
-
   const url = scheduleApi + group.id + "/" + date.format("YYYY-MM-DD");
   const schedule = await (await fetch(url)).json();
 
@@ -175,4 +170,17 @@ async function getSchedule(group, date) {
   }
 
   return;
+}
+
+function getDateFrom(date) {
+  switch (date.day()) {
+    case 0:
+      date = date.add(1, "day");
+      break;
+    case 6: {
+      date = date.add(2, "day");
+    }
+  }
+
+  return date;
 }
