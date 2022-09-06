@@ -5,11 +5,12 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon index.js",
-    "start": "node index.js"
+    "start": "cross-env ENV_MODE=production node index.js"
   },
   "author": "Dmitry Krasiev",
   "license": "ISC",
   "dependencies": {
+    "cross-env": "^7.0.3",
     "dayjs": "^1.11.5",
     "dotenv": "^16.0.2",
     "node-telegram-bot-api": "^0.59.0"

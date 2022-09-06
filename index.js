@@ -1,4 +1,6 @@
 const dotenv = require("dotenv");
+const fs = require("fs/promises");
+const path = require("path");
 const TelegramApi = require("node-telegram-bot-api");
 const dayjs = require("dayjs");
 
@@ -7,15 +9,33 @@ dotenv.config();
 const scheduleApi = "https://asu.samgk.ru//api/schedule/";
 const groupsApi = "https://mfc.samgk.ru/api/groups";
 
-const bot = new TelegramApi(process.env.TOKEN_BOT, { polling: true });
+const token =
+  process.env.ENV_MODE == "production"
+    ? process.env.TOKEN_BOT
+    : process.env.TEST_TOKEN_BOT;
+const bot = new TelegramApi(token, { polling: true });
+
+console.log(
+  process.env.ENV_MODE == "production" ? "production mode" : "dev mode"
+);
+
+const chatsPath = path.resolve(__dirname, "data", "chats.json");
+
+fs.readFile(chatsPath).catch(() => {
+  fs.writeFile(chatsPath, "{}");
+});
 
 let groups = [];
+let chats = {};
+
+loadChatsSettings();
 
 bot.setMyCommands([
   // { command: "/start", description: "Включить меня" },
   { command: "/help", description: "Показать помощь" },
   { command: "/groups", description: "Показать все существующие группы" },
   { command: "/schedule", description: "Показать расписание" },
+  { command: "/setgroup", description: "Изменить расписание по-умолчанию" },
 ]);
 
 bot.on("message", async (msg) => {
@@ -26,16 +46,33 @@ bot.on("message", async (msg) => {
 
   if (msg.text.startsWith("/start")) {
     await bot.sendMessage(msg.chat.id, `Привет, ${msg.from.first_name}`);
-  } else if (msg.text.startsWith("/help")) {
+
     await bot.sendMessage(
       msg.chat.id,
-      "Для получения расписания напишите: \nрасписание <номер группы*>\nПример номера группы: ис-19-04, ис1904, ис 19 04\n*по-умолчанию используется ИС-19-04"
+      "Чтобы узнать как я работаю, введи команду /help"
+    );
+  } else if (msg.text.startsWith("/help")) {
+    await bot.sendMessage(msg.chat.id, getHelpMessage(msg.chat.id));
+  } else if (msg.text.startsWith("/setgroup")) {
+    const group = getGroupFromMessage(msg.text);
+
+    if (!group) {
+      bot.sendMessage(msg.chat.id, "Группа не найдена или вы ничего не ввели");
+      return;
+    }
+
+    await saveChatGroup(msg.chat.id, group);
+
+    await bot.sendMessage(
+      msg.chat.id,
+      "Группа " + getGroupFromChat(msg.chat.id).name + " успешно установлена"
     );
   } else if (
     msg.text.startsWith("/schedule") ||
     msg.text.toLowerCase().includes("расписание")
   ) {
-    const group = getGroupFromMessage(msg.text);
+    const group =
+      getGroupFromMessage(msg.text) || getGroupFromChat(msg.chat.id);
     if (!group) {
       return await bot.sendMessage(msg.chat.id, "Группа не найдена");
     }
@@ -44,8 +81,16 @@ bot.on("message", async (msg) => {
   } else if (msg.text.startsWith("/groups")) {
     await bot.sendMessage(msg.chat.id, getMessageAllGroups());
   } else {
-    if (msg.chat.type == "private")
-      await bot.sendMessage(msg.chat.id, "Я тебя не понимаю");
+    if (msg.chat.type == "private") {
+      const group = getGroupFromMessage(msg.text);
+
+      if (group) {
+        await sendSchedule(msg.chat.id, group);
+      } else {
+        await bot.sendMessage(msg.chat.id, "Я тебя не понимаю");
+      }
+      return;
+    }
   }
 });
 
@@ -96,6 +141,12 @@ async function sendSchedule(chatId, group) {
   await bot.sendMessage(chatId, getMessageSchedule(scheduleNext, group));
 }
 
+async function loadChatsSettings() {
+  fs.readFile(chatsPath, { encoding: "utf-8" }).then((chatsData) => {
+    chats = JSON.parse(chatsData || "{}");
+  });
+}
+
 function getGroupFromMessage(message) {
   const regexArr = message.match(/[А-я]{2,3}[\W]?\d{2}[\W]?\d{2}/g);
   const groupName = regexArr
@@ -106,11 +157,13 @@ function getGroupFromMessage(message) {
     (group) => group.name.toLowerCase().replaceAll("-", "") == groupName
   );
 
-  if (!regexArr) {
-    return groups.find((group) => group.name == "ИС-19-04");
-  }
-
   return group;
+}
+
+async function saveChatGroup(chatId, group) {
+  chats[chatId] = group.name;
+
+  await fs.writeFile(chatsPath, JSON.stringify(chats));
 }
 
 function log(message) {
@@ -123,6 +176,16 @@ function log(message) {
   } else {
     console.log(`${username}: ${text}`);
   }
+}
+
+function getGroupFromChat(chatId) {
+  let group = null;
+  if (chatId in chats) {
+    const groupName = chats[chatId];
+    group = groups.find((group) => group.name == groupName);
+  }
+
+  return group;
 }
 
 function numToTime(num) {
@@ -157,13 +220,24 @@ async function getSchedule(group, date) {
   const url = scheduleApi + group.id + "/" + date.format("YYYY-MM-DD");
   const schedule = await (await fetch(url)).json();
 
-  console.log(url);
-
   if (schedule) {
     return schedule;
   }
 
   return;
+}
+
+function getHelpMessage(chatId) {
+  const defaultGroup = getGroupFromChat(chatId);
+
+  let message =
+    "Для получения расписания напишите: \nрасписание <номер группы>\n\nПример номера группы: ис-19-04, ис1904, ис 19 04\n";
+
+  message += defaultGroup
+    ? "По-умолчанию выбрана группа " + defaultGroup.name
+    : 'Группа по-умолчанию не выбрана. Чтобы установить группу введите "/setgroup <номер группы>"';
+
+  return message;
 }
 
 function getDateFrom(date) {
