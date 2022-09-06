@@ -8,7 +8,7 @@
 
 > Telegram bot, that shows schedule
 
-### ✨ [Demo](https://t.me/sgk_schedule_bot)
+### 🤖 [Bot](https://t.me/sgk_schedule_bot)
 
 ## Install
 
@@ -19,18 +19,10 @@ npm install
 ## Usage
 
 ```sh
+echo TOKEN_BOT=<your-bot-token> > .env
 npm run start
 ```
-
-## Author
-
-👤 **Dmitry Krasiev**
-
-* Github: [@dkrasiev](https://github.com/dkrasiev)
 
 ## Show your support
 
 Give a ⭐️ if this project helped you!
-
-***
-_This README was generated with ❤️ by [readme-md-generator](https://github.com/kefranabg/readme-md-generator)_
