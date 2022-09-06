@@ -1,12 +1,13 @@
+const dotenv = require("dotenv");
 const TelegramApi = require("node-telegram-bot-api");
 const dayjs = require("dayjs");
 
-const token = "5573955751:AAGSxf-p0pd8y_u39b-Hd_9-3RBz1cGTbXw";
+dotenv.config();
 
 const scheduleApi = "https://asu.samgk.ru//api/schedule/";
 const groupsApi = "https://mfc.samgk.ru/api/groups";
 
-const bot = new TelegramApi(token, { polling: true });
+const bot = new TelegramApi(process.env.TOKEN_BOT, { polling: true });
 
 let groups = [];
 
@@ -39,19 +40,7 @@ bot.on("message", async (msg) => {
       return await bot.sendMessage(msg.chat.id, "Группа не найдена");
     }
 
-    const currentDate = dayjs();
-
-    const firstDate = getDateFrom(currentDate);
-    const secondDate = getDateFrom(firstDate.add(1, "day"));
-
-    const scheduleToday = await getSchedule(group, firstDate);
-    const scheduleNext = await getSchedule(group, secondDate);
-
-    await bot.sendMessage(
-      msg.chat.id,
-      getMessageSchedule(scheduleToday, group)
-    );
-    await bot.sendMessage(msg.chat.id, getMessageSchedule(scheduleNext, group));
+    await sendSchedule(msg.chat.id, group);
   } else if (msg.text.startsWith("/groups")) {
     await bot.sendMessage(msg.chat.id, getMessageAllGroups());
   } else {
@@ -63,8 +52,6 @@ bot.on("message", async (msg) => {
 bot.on("new_chat_photo", (msg) => {
   bot.sendMessage(msg.chat.id, "nice chat photo 👍");
 });
-
-bot.on("polling_error", console.log);
 
 function getMessageAllGroups() {
   return groups.map((group) => group.name).join("\n");
@@ -96,6 +83,19 @@ function getMessageSchedule(schedule, group) {
   return message;
 }
 
+async function sendSchedule(chatId, group) {
+  const currentDate = dayjs();
+
+  const firstDate = getDateFrom(currentDate);
+  const secondDate = getDateFrom(firstDate.add(1, "day"));
+
+  const scheduleToday = await getSchedule(group, firstDate);
+  const scheduleNext = await getSchedule(group, secondDate);
+
+  await bot.sendMessage(chatId, getMessageSchedule(scheduleToday, group));
+  await bot.sendMessage(chatId, getMessageSchedule(scheduleNext, group));
+}
+
 function getGroupFromMessage(message) {
   const regexArr = message.match(/[А-я]{2,3}[\W]?\d{2}[\W]?\d{2}/g);
   const groupName = regexArr
@@ -115,9 +115,7 @@ function getGroupFromMessage(message) {
 
 function log(message) {
   const title = message.chat.title;
-  const username = message.from.last_name
-    ? message.from.first_name + " " + message.from.last_name
-    : message.from.first_name;
+  const username = message.from.username;
   const text = message.text;
 
   if (title) {
