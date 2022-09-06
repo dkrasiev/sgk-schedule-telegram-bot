@@ -10,22 +10,16 @@ const bot = new TelegramApi(token, { polling: true });
 
 let groups = [];
 
-fetch(groupsApi)
-  .then((response) => response.json())
-  .then((groupsResponse) => {
-    groups = groupsResponse
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .filter((group) => group.name != "--");
-  });
-
 bot.setMyCommands([
   // { command: "/start", description: "Включить меня" },
   { command: "/help", description: "Показать помощь" },
   { command: "/groups", description: "Показать все существующие группы" },
+  { command: "/schedule", description: "Показать расписание" },
 ]);
 
 bot.on("message", async (msg) => {
   if (!msg.text) return;
+  if (groups.length == 0) await fetchGroups();
 
   log(msg);
 
@@ -34,7 +28,7 @@ bot.on("message", async (msg) => {
   } else if (msg.text.startsWith("/help")) {
     await bot.sendMessage(
       msg.chat.id,
-      "Для получения расписания напишите: \nрасписание <номер группы>\nПример номера группы: ис-19-04, ис1904, ис 19 04"
+      "Для получения расписания напишите: \nрасписание <номер группы*>\nПример номера группы: ис-19-04, ис1904, ис 19 04\n*по-умолчанию используется ИС-19-04"
     );
   } else if (
     msg.text.startsWith("/schedule") ||
@@ -69,6 +63,8 @@ bot.on("message", async (msg) => {
 bot.on("new_chat_photo", (msg) => {
   bot.sendMessage(msg.chat.id, "nice chat photo 👍");
 });
+
+bot.on("polling_error", console.log);
 
 function getMessageAllGroups() {
   return groups.map((group) => group.name).join("\n");
@@ -183,4 +179,14 @@ function getDateFrom(date) {
   }
 
   return date;
+}
+
+async function fetchGroups() {
+  await fetch(groupsApi)
+    .then((response) => response.json())
+    .then((groupsResponse) => {
+      groups = groupsResponse
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .filter((group) => group.name != "--");
+    });
 }
