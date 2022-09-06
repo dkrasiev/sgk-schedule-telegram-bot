@@ -8,7 +8,7 @@
 
 > Telegram bot, that shows schedule
 
-### ✨ [Demo](https://t.me/sgk_schedule_bot)
+### 🤖 [Bot](https://t.me/sgk_schedule_bot)
 
 ## Install
 
