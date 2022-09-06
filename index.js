@@ -98,6 +98,8 @@ function getMessageSchedule(schedule, group) {
       lesson.title +
       "\n" +
       lesson.teachername +
+      "\n" +
+      lesson.cab +
       "\n\n";
   }
 
@@ -110,14 +112,11 @@ function getGroupFromMessage(message) {
     ? regexArr[0].replaceAll("-", "").replaceAll(" ", "").toLowerCase()
     : "";
 
-  console.log(regexArr);
-  console.log(groupName);
-
   const group = groups?.find(
     (group) => group.name.toLowerCase().replaceAll("-", "") == groupName
   );
 
-  if (message == "расписание") {
+  if (!regexArr) {
     return groups.find((group) => group.name == "ИС-19-04");
   }
 
