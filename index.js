@@ -18,24 +18,26 @@ fetch(groupsApi)
   });
 
 bot.setMyCommands([
-  { command: "/start", description: "Включить меня" },
+  // { command: "/start", description: "Включить меня" },
   { command: "/help", description: "Показать помощь" },
   { command: "/groups", description: "Показать все существующие группы" },
 ]);
 
 bot.on("message", async (msg) => {
+  if (!msg.text) return;
+
   log(msg);
 
-  if (msg.text?.startsWith("/start")) {
+  if (msg.text.startsWith("/start")) {
     await bot.sendMessage(msg.chat.id, `Привет, ${msg.from.first_name}`);
-  } else if (msg.text?.startsWith("/help")) {
+  } else if (msg.text.startsWith("/help")) {
     await bot.sendMessage(
       msg.chat.id,
       "Для получения расписания напишите: \nрасписание <номер группы>"
     );
   } else if (
-    msg.text?.startsWith("/schedule") ||
-    msg.text?.toLowerCase().includes("расписание")
+    msg.text.startsWith("/schedule") ||
+    msg.text.toLowerCase().includes("расписание")
   ) {
     const group = getGroupFromMessage(msg.text);
 
@@ -52,7 +54,7 @@ bot.on("message", async (msg) => {
     } else {
       await bot.sendMessage(msg.chat.id, "Группа не найдена");
     }
-  } else if (msg.text?.startsWith("/groups")) {
+  } else if (msg.text.startsWith("/groups")) {
     bot.sendMessage(msg.chat.id, getMessageAllGroups());
   } else {
     if (msg.chat.type == "private")
