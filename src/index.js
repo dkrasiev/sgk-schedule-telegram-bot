@@ -309,7 +309,6 @@ function getDateFrom(date) {
 
 async function fetchGroups() {
   try {
-    console.log(groupsApi);
     const groupsData = (await axios.get(groupsApi)).data;
 
     groups = groupsData
@@ -317,6 +316,7 @@ async function fetchGroups() {
       .filter((group) => group.name != "--");
   } catch (error) {
     console.log(error);
+    fetchGroups();
   }
 }
 
