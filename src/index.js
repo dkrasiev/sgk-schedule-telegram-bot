@@ -268,6 +268,7 @@ function numToTime(num) {
 async function getSchedule(groupId, date) {
   try {
     const url = scheduleApi + groupId + "/" + date.format("YYYY-MM-DD");
+    console.log(url);
     const schedule = (await axios.get(url)).data;
 
     if (schedule) {
@@ -308,6 +309,7 @@ function getDateFrom(date) {
 
 async function fetchGroups() {
   try {
+    console.log(groupsApi);
     const groupsData = (await axios.get(groupsApi)).data;
 
     groups = groupsData
