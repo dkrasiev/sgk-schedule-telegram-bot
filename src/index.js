@@ -9,6 +9,8 @@ require("dotenv").config();
 const scheduleApi = "https://asu.samgk.ru/api/schedule/";
 const groupsApi = "https://mfc.samgk.ru/api/groups";
 
+console.log(process.env.PORT);
+
 const token =
   process.env.ENV_MODE == "dev"
     ? process.env.TEST_TOKEN_BOT
