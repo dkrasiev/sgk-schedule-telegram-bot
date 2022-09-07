@@ -2,6 +2,7 @@ const fs = require("fs/promises");
 const path = require("path");
 const TelegramApi = require("node-telegram-bot-api");
 const dayjs = require("dayjs");
+const axios = require("axios").default;
 
 require("dotenv").config();
 
@@ -264,7 +265,7 @@ function numToTime(num) {
 
 async function getSchedule(groupId, date) {
   const url = scheduleApi + groupId + "/" + date.format("YYYY-MM-DD");
-  const schedule = await (await fetch(url)).json();
+  const schedule = (await axios.get(url)).data;
 
   if (schedule) {
     return schedule;
@@ -300,11 +301,7 @@ function getDateFrom(date) {
 }
 
 async function fetchGroups() {
-  const response = await fetch(groupsApi);
-  const responseText = await response.text();
-  const groupsData = JSON.parse(responseText);
-
-  console.log(groupsData.length);
+  const groupsData = (await axios.get(groupsApi)).data;
 
   groups = groupsData
     .sort((a, b) => a.name.localeCompare(b.name))
