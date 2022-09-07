@@ -342,7 +342,7 @@ function startSubscription(chatId, groupId) {
     saveChatSettings(chatId, { subscription });
   });
 
-  setSubscriptionInterval(chatId, { subscription });
+  setSubscriptionInterval(chatId, subscription);
 
   saveChatSettings(chatId, { subscription });
 }
