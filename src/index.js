@@ -301,7 +301,10 @@ function getDateFrom(date) {
 
 async function fetchGroups() {
   const response = await fetch(groupsApi);
-  const groupsData = await response.json();
+  const responseText = await response.text();
+  const groupsData = JSON.parse(responseText);
+
+  console.log(groupsData.length);
 
   groups = groupsData
     .sort((a, b) => a.name.localeCompare(b.name))
