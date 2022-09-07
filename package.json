@@ -7,6 +7,9 @@
     "dev": "cross-env ENV_MODE=dev node src/index.js",
     "start": "cross-env ENV_MODE=production node src/index.js"
   },
+  "engines": {
+    "node": "18.x"
+  },
   "author": "Dmitry Krasiev",
   "license": "ISC",
   "dependencies": {
