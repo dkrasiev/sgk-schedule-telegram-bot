@@ -35,35 +35,35 @@
     }
   },
   "748299957": {
-    "defaultGroup": "ИС-20-05",
+    "defaultGroup": "ИС-19-04",
     "subscription": {
-      "groupId": 204,
+      "groupId": 187,
       "lastSchedule": {
         "date": "08.09.2022",
         "lessons": [
           {
-            "title": "МДК.11.01 Технология разработки и защиты баз данных",
+            "title": "ОГСЭ.04 Иностранный язык в профессиональной деятельности",
             "num": "4",
-            "teachername": "Юрина Валерия Алексеевна",
+            "teachername": "Куропаткина Светлана Анатольевна",
             "nameGroup": null,
-            "cab": "дист/дист",
-            "resource": "\n\t\t\t\t\t\t\tСвязь - <a href=\"https://discord.gg/TS7dgmxh2Q\">Discord</a>.<br>\n\t\t\t\t\t\t\t\t<i>В случае отсутствия связи:</i><br>\n\t\t\t\t\t\t\t\tМатериалы к занятию: <a href=\"https://lk.samgk.ru/\">https://lk.samgk.ru/</a>.<br>\n\t\t\t\t\t\t\t\tРазмещение отчётов студентов: <a href=\"https://lk.samgk.ru/\">https://lk.samgk.ru/</a>.<br>\n\t\t\t\t\t\t\t\tДополнительные ресурсы: <a href=\"https://www.udemy.com/\">Udemy</a><br>, <a href=\"https://www.coursera.org/\">Coursera</a><br>\n\t\t\t\t\t\t"
+            "cab": "5/532",
+            "resource": ""
           },
           {
-            "title": "ОГСЭ.05 Физическая культура",
+            "title": "ОГСЭ.04 Иностранный язык в профессиональной деятельности",
             "num": "5",
-            "teachername": "Петухов Дмитрий Викторович",
+            "teachername": "Куропаткина Светлана Анатольевна",
             "nameGroup": null,
-            "cab": "дист/дист",
-            "resource": "\n\t\t\t\t\t\t\tСвязь - <a href=\"https://discord.gg/TS7dgmxh2Q\">Discord</a>.<br>\n\t\t\t\t\t\t\t\t<i>В случае отсутствия связи:</i><br>\n\t\t\t\t\t\t\t\tМатериалы к занятию: <a href=\"https://lk.samgk.ru/\">https://lk.samgk.ru/</a>.<br>\n\t\t\t\t\t\t\t\tРазмещение отчётов студентов: <a href=\"https://lk.samgk.ru/\">https://lk.samgk.ru/</a>.<br>\n\t\t\t\t\t\t\t\tДополнительные ресурсы: <a href=\"https://www.udemy.com/\">Udemy</a><br>, <a href=\"https://www.coursera.org/\">Coursera</a><br>\n\t\t\t\t\t\t"
+            "cab": "5/515",
+            "resource": ""
           },
           {
-            "title": "МДК.11.01 Технология разработки и защиты баз данных",
+            "title": "МДК.05.02 Разработка кода информационных систем",
             "num": "6",
-            "teachername": "Юрина Валерия Алексеевна",
+            "teachername": "Безбородова Ульяна Михайловна",
             "nameGroup": null,
-            "cab": "дист/дист",
-            "resource": "\n\t\t\t\t\t\t\tСвязь - <a href=\"https://discord.gg/TS7dgmxh2Q\">Discord</a>.<br>\n\t\t\t\t\t\t\t\t<i>В случае отсутствия связи:</i><br>\n\t\t\t\t\t\t\t\tМатериалы к занятию: <a href=\"https://lk.samgk.ru/\">https://lk.samgk.ru/</a>.<br>\n\t\t\t\t\t\t\t\tРазмещение отчётов студентов: <a href=\"https://lk.samgk.ru/\">https://lk.samgk.ru/</a>.<br>\n\t\t\t\t\t\t\t\tДополнительные ресурсы: <a href=\"https://www.udemy.com/\">Udemy</a><br>, <a href=\"https://www.coursera.org/\">Coursera</a><br>\n\t\t\t\t\t\t"
+            "cab": "5/532",
+            "resource": ""
           }
         ]
       }
