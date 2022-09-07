@@ -1,18 +1,17 @@
-const dotenv = require("dotenv");
 const fs = require("fs/promises");
 const path = require("path");
 const TelegramApi = require("node-telegram-bot-api");
 const dayjs = require("dayjs");
 
-dotenv.config();
+require("dotenv").config();
 
-const scheduleApi = "https://asu.samgk.ru//api/schedule/";
+const scheduleApi = "https://asu.samgk.ru/api/schedule/";
 const groupsApi = "https://mfc.samgk.ru/api/groups";
 
 const token =
-  process.env.ENV_MODE == "production"
-    ? process.env.TOKEN_BOT
-    : process.env.TEST_TOKEN_BOT;
+  process.env.ENV_MODE == "dev"
+    ? process.env.TEST_TOKEN_BOT
+    : process.env.TOKEN_BOT;
 const bot = new TelegramApi(token, { polling: true });
 
 console.log(
@@ -26,9 +25,20 @@ fs.readFile(chatsPath).catch(() => {
 });
 
 let groups = [];
+let intervals = {};
 let chats = {};
 
+async function activateSubscriptions() {
+  Object.entries(chats).forEach(([id, settings]) => {
+    if (settings?.subscription?.groupId) {
+      setSubscriptionInterval(id, settings.subscription);
+    }
+  });
+}
+
 loadChatsSettings();
+
+fetchGroups();
 
 bot.setMyCommands([
   // { command: "/start", description: "Включить меня" },
@@ -36,11 +46,12 @@ bot.setMyCommands([
   { command: "/groups", description: "Показать все существующие группы" },
   { command: "/schedule", description: "Показать расписание" },
   { command: "/setgroup", description: "Изменить расписание по-умолчанию" },
+  { command: "/subscribe", description: "Подписаться на рассылку расписания" },
+  { command: "/unsubscribe", description: "Отписаться от рассылки расписания" },
 ]);
 
 bot.on("message", async (msg) => {
   if (!msg.text) return;
-  if (groups.length == 0) await fetchGroups();
 
   log(msg);
 
@@ -61,11 +72,11 @@ bot.on("message", async (msg) => {
       return;
     }
 
-    await saveChatGroup(msg.chat.id, group);
+    await saveChatSettings(msg.chat.id, { defaultGroup: group.name });
 
     await bot.sendMessage(
       msg.chat.id,
-      "Группа " + getGroupFromChat(msg.chat.id).name + " успешно установлена"
+      "Группа " + group.name + " успешно установлена"
     );
   } else if (
     msg.text.startsWith("/schedule") ||
@@ -80,6 +91,32 @@ bot.on("message", async (msg) => {
     await sendSchedule(msg.chat.id, group);
   } else if (msg.text.startsWith("/groups")) {
     await bot.sendMessage(msg.chat.id, getMessageAllGroups());
+  } else if (msg.text.startsWith("/subscribe")) {
+    const group =
+      getGroupFromMessage(msg.text) || getGroupFromChat(msg.chat.id);
+
+    if (!group) {
+      await bot.sendMessage(
+        msg.chat.id,
+        "Группа не найдена или вы ничего не ввели"
+      );
+
+      return;
+    }
+
+    stopSubscription(msg.chat.id);
+    startSubscription(msg.chat.id, group.id);
+
+    bot.sendMessage(
+      msg.chat.id,
+      "Вы подписались на рассылку расписания группы " + group.name
+    );
+  } else if (msg.text.startsWith("/unsubscribe")) {
+    if (stopSubscription(msg.chat.id)) {
+      bot.sendMessage(msg.chat.id, "Вы отписались от рассылки расписания");
+    } else {
+      bot.sendMessage(msg.chat.id, "Вы не подписаны на рассылку расписания");
+    }
   } else {
     if (msg.chat.type == "private") {
       const group = getGroupFromMessage(msg.text);
@@ -142,9 +179,13 @@ async function sendSchedule(chatId, group) {
 }
 
 async function loadChatsSettings() {
-  fs.readFile(chatsPath, { encoding: "utf-8" }).then((chatsData) => {
-    chats = JSON.parse(chatsData || "{}");
-  });
+  const chatsData = JSON.parse(
+    await fs.readFile(chatsPath, { encoding: "utf-8" })
+  );
+
+  chats = chatsData || {};
+
+  await activateSubscriptions();
 }
 
 function getGroupFromMessage(message) {
@@ -160,10 +201,14 @@ function getGroupFromMessage(message) {
   return group;
 }
 
-async function saveChatGroup(chatId, group) {
-  chats[chatId] = group.name;
+async function saveChatSettings(chatId, settings) {
+  if (settings) {
+    chats[chatId] = { ...chats[chatId], ...settings };
+  }
 
-  await fs.writeFile(chatsPath, JSON.stringify(chats));
+  console.log(chatId, chats[chatId]);
+
+  await fs.writeFile(chatsPath, JSON.stringify(chats, undefined, 2));
 }
 
 function log(message) {
@@ -180,8 +225,9 @@ function log(message) {
 
 function getGroupFromChat(chatId) {
   let group = null;
+
   if (chatId in chats) {
-    const groupName = chats[chatId];
+    const groupName = chats[chatId].defaultGroup;
     group = groups.find((group) => group.name == groupName);
   }
 
@@ -254,11 +300,66 @@ function getDateFrom(date) {
 }
 
 async function fetchGroups() {
-  await fetch(groupsApi)
-    .then((response) => response.json())
-    .then((groupsResponse) => {
-      groups = groupsResponse
-        .sort((a, b) => a.name.localeCompare(b.name))
-        .filter((group) => group.name != "--");
-    });
+  const response = await fetch(groupsApi);
+  const groupsData = await response.json();
+
+  groups = groupsData
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .filter((group) => group.name != "--");
+}
+
+function startSubscription(chatId, groupId) {
+  const subscription = {
+    groupId,
+    lastSchedule: null,
+  };
+
+  chats[chatId].subscription = subscription;
+  setSubscriptionInterval(chatId, subscription);
+
+  saveChatSettings(chatId, { subscription });
+}
+
+function stopSubscription(chatId) {
+  const chatSettings = chats[chatId];
+  if (!chatSettings?.subscription?.groupId) {
+    return false;
+  }
+
+  clearInterval(intervals[chatId]);
+  delete intervals[chatId];
+
+  delete chatSettings.subscription;
+  saveChatSettings(chatId);
+
+  return true;
+}
+
+function setSubscriptionInterval(chatId, subscription) {
+  intervals[chatId] = setInterval(async () => {
+    const dateNext = getDateFrom(dayjs().add(1, "day"));
+
+    const group = groups.find((value) => value.id == subscription.groupId);
+
+    const schedule = await getSchedule(group, dateNext);
+
+    if (schedule.lessons.length == 0) return;
+    if (!subscription.lastSchedule) {
+      subscription.lastSchedule = schedule;
+      return;
+    }
+
+    if (compareSchedule(subscription.lastSchedule, schedule)) return;
+
+    subscription.lastSchedule = schedule;
+
+    saveChatSettings(chatId);
+
+    await bot.sendMessage(chatId, "Вышло новое расписание!");
+    await bot.sendMessage(chatId, getMessageSchedule(schedule, group));
+  }, 1800 * 1000);
+}
+
+function compareSchedule(a, b) {
+  return JSON.stringify(a) == JSON.stringify(b);
 }

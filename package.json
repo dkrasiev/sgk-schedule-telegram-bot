@@ -4,8 +4,8 @@
   "description": "Telegram bot, that shows schedule",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon index.js",
-    "start": "cross-env ENV_MODE=production node index.js"
+    "dev": "cross-env ENV_MODE=dev node src/index.js",
+    "start": "cross-env ENV_MODE=production node src/index.js"
   },
   "author": "Dmitry Krasiev",
   "license": "ISC",
