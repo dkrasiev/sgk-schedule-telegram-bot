@@ -18,8 +18,7 @@ npm install
 
 ## Usage
 
-add token for telegram bot
-add mongodb's uri
+add telegram bot's token and mongodb's uri
 
 ```sh
 npm run start
