@@ -171,8 +171,8 @@ async function sendSchedule(chatId, group) {
   const firstDate = getDateFrom(currentDate);
   const secondDate = getDateFrom(firstDate.add(1, "day"));
 
-  const scheduleToday = await getSchedule(group, firstDate);
-  const scheduleNext = await getSchedule(group, secondDate);
+  const scheduleToday = await getSchedule(group.id, firstDate);
+  const scheduleNext = await getSchedule(group.id, secondDate);
 
   await bot.sendMessage(chatId, getMessageSchedule(scheduleToday, group));
   await bot.sendMessage(chatId, getMessageSchedule(scheduleNext, group));
@@ -262,8 +262,8 @@ function numToTime(num) {
   return times[num];
 }
 
-async function getSchedule(group, date) {
-  const url = scheduleApi + group.id + "/" + date.format("YYYY-MM-DD");
+async function getSchedule(groupId, date) {
+  const url = scheduleApi + groupId + "/" + date.format("YYYY-MM-DD");
   const schedule = await (await fetch(url)).json();
 
   if (schedule) {
@@ -314,6 +314,12 @@ function startSubscription(chatId, groupId) {
     lastSchedule: null,
   };
 
+  const dateNext = getDateFrom(dayjs().add(1, "day"));
+  getSchedule(groupId, dateNext).then((schedule) => {
+    subscription.lastSchedule = schedule;
+    saveChatSettings(chatId);
+  });
+
   chats[chatId].subscription = subscription;
   setSubscriptionInterval(chatId, subscription);
 
@@ -341,7 +347,7 @@ function setSubscriptionInterval(chatId, subscription) {
 
     const group = groups.find((value) => value.id == subscription.groupId);
 
-    const schedule = await getSchedule(group, dateNext);
+    const schedule = await getSchedule(group.id, dateNext);
 
     if (schedule.lessons.length == 0) return;
     if (!subscription.lastSchedule) {
@@ -349,7 +355,10 @@ function setSubscriptionInterval(chatId, subscription) {
       return;
     }
 
-    if (compareSchedule(subscription.lastSchedule, schedule)) return;
+    if (compareSchedule(subscription.lastSchedule, schedule)) {
+      console.log(`Расписание для группы ${group.name} не изменилось`);
+      return;
+    }
 
     subscription.lastSchedule = schedule;
 
@@ -358,6 +367,8 @@ function setSubscriptionInterval(chatId, subscription) {
     await bot.sendMessage(chatId, "Вышло новое расписание!");
     await bot.sendMessage(chatId, getMessageSchedule(schedule, group));
   }, 1800 * 1000);
+
+  console.log("Интервал создан");
 }
 
 function compareSchedule(a, b) {
