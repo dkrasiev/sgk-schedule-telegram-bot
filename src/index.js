@@ -141,7 +141,7 @@ function getMessageAllGroups() {
 }
 
 function getMessageSchedule(schedule, group) {
-  if (!schedule) return;
+  if (!schedule) return "a";
 
   let message = group?.name + "\n" + schedule.date + "\n\n";
 
@@ -264,14 +264,18 @@ function numToTime(num) {
 }
 
 async function getSchedule(groupId, date) {
-  const url = scheduleApi + groupId + "/" + date.format("YYYY-MM-DD");
-  const schedule = (await axios.get(url)).data;
+  try {
+    const url = scheduleApi + groupId + "/" + date.format("YYYY-MM-DD");
+    const schedule = (await axios.get(url)).data;
 
-  if (schedule) {
-    return schedule;
+    if (schedule) {
+      return schedule;
+    }
+
+    return;
+  } catch (error) {
+    console.log(error);
   }
-
-  return;
 }
 
 function getHelpMessage(chatId) {
@@ -301,11 +305,15 @@ function getDateFrom(date) {
 }
 
 async function fetchGroups() {
-  const groupsData = (await axios.get(groupsApi)).data;
+  try {
+    const groupsData = (await axios.get(groupsApi)).data;
 
-  groups = groupsData
-    .sort((a, b) => a.name.localeCompare(b.name))
-    .filter((group) => group.name != "--");
+    groups = groupsData
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .filter((group) => group.name != "--");
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 function startSubscription(chatId, groupId) {
