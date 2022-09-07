@@ -4,7 +4,7 @@
   "description": "Telegram bot, that shows schedule",
   "main": "index.js",
   "scripts": {
-    "dev": "cross-env ENV_MODE=dev node src/index.js",
+    "dev": "cross-env ENV_MODE=dev nodemon src/index.js",
     "start": "cross-env ENV_MODE=production node src/index.js"
   },
   "engines": {
@@ -17,6 +17,7 @@
     "cross-env": "^7.0.3",
     "dayjs": "^1.11.5",
     "dotenv": "^16.0.2",
+    "mongodb": "^4.9.1",
     "node-telegram-bot-api": "^0.59.0"
   },
   "devDependencies": {
