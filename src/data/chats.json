@@ -1,0 +1,81 @@
+{
+  "739295949": {
+    "defaultGroup": "ИС-19-03",
+    "subscription": {
+      "groupId": 183,
+      "lastSchedule": {
+        "date": "08.09.2022",
+        "lessons": [
+          {
+            "title": "МДК.04.01 Внедрение и поддержка компьютерных систем",
+            "num": "4",
+            "teachername": "Гребнев Николай Николаевич",
+            "nameGroup": null,
+            "cab": "дист/дист",
+            "resource": "\n\t\t\t\t\t\t\tСвязь - <a href=\"https://discord.gg/uhg5Z8z\">Discord</a>.<br>\n\t\t\t\t\t\t\t\t<i>В случае отсутствия связи:</i><br>\n\t\t\t\t\t\t\t\tМатериалы к занятию: <a href=\"https://lk.samgk.ru/\">https://lk.samgk.ru/</a>.<br>\n\t\t\t\t\t\t\t\tРазмещение отчётов студентов: <a href=\"https://lk.samgk.ru/\">https://lk.samgk.ru/</a>.<br>\n\t\t\t\t\t\t\t\tДополнительные ресурсы: <a href=\"https://www.udemy.com/\">Udemy</a><br>, <a href=\"https://www.coursera.org/\">Coursera</a><br>\n\t\t\t\t\t\t"
+          },
+          {
+            "title": "МДК.04.01 Внедрение и поддержка компьютерных систем",
+            "num": "5",
+            "teachername": "Гребнев Николай Николаевич",
+            "nameGroup": null,
+            "cab": "дист/дист",
+            "resource": "\n\t\t\t\t\t\t\tСвязь - <a href=\"https://discord.gg/uhg5Z8z\">Discord</a>.<br>\n\t\t\t\t\t\t\t\t<i>В случае отсутствия связи:</i><br>\n\t\t\t\t\t\t\t\tМатериалы к занятию: <a href=\"https://lk.samgk.ru/\">https://lk.samgk.ru/</a>.<br>\n\t\t\t\t\t\t\t\tРазмещение отчётов студентов: <a href=\"https://lk.samgk.ru/\">https://lk.samgk.ru/</a>.<br>\n\t\t\t\t\t\t\t\tДополнительные ресурсы: <a href=\"https://www.udemy.com/\">Udemy</a><br>, <a href=\"https://www.coursera.org/\">Coursera</a><br>\n\t\t\t\t\t\t"
+          },
+          {
+            "title": "ОГСЭ.08 Терминология в профессиональной деятельности на иностранном языке",
+            "num": "6",
+            "teachername": "Куропаткина Светлана Анатольевна",
+            "nameGroup": null,
+            "cab": "дист/дист",
+            "resource": "\n\t\t\t\t\t\t\tСвязь - <a href=\"https://discord.gg/uhg5Z8z\">Discord</a>.<br>\n\t\t\t\t\t\t\t\t<i>В случае отсутствия связи:</i><br>\n\t\t\t\t\t\t\t\tМатериалы к занятию: <a href=\"https://lk.samgk.ru/\">https://lk.samgk.ru/</a>.<br>\n\t\t\t\t\t\t\t\tРазмещение отчётов студентов: <a href=\"https://lk.samgk.ru/\">https://lk.samgk.ru/</a>.<br>\n\t\t\t\t\t\t\t\tДополнительные ресурсы: <a href=\"https://www.udemy.com/\">Udemy</a><br>, <a href=\"https://www.coursera.org/\">Coursera</a><br>\n\t\t\t\t\t\t"
+          }
+        ]
+      }
+    }
+  },
+  "748299957": {
+    "defaultGroup": "ИС-19-04",
+    "subscription": {
+      "groupId": 187,
+      "lastSchedule": {
+        "date": "08.09.2022",
+        "lessons": [
+          {
+            "title": "ОГСЭ.04 ",
+            "num": "4",
+            "teachername": "Куропаткина Светлана Анатольевна",
+            "nameGroup": null,
+            "cab": "5/532",
+            "resource": ""
+          },
+          {
+            "title": "ОГСЭ.04 Иностранный язык в профессиональной деятельности",
+            "num": "5",
+            "teachername": "Куропаткина Светлана Анатольевна",
+            "nameGroup": null,
+            "cab": "5/515",
+            "resource": ""
+          },
+          {
+            "title": "МДК.05.02 Разработка кода информационных систем",
+            "num": "6",
+            "teachername": "Безбородова Ульяна Михайловна",
+            "nameGroup": null,
+            "cab": "5/532",
+            "resource": ""
+          }
+        ]
+      }
+    }
+  },
+  "1243504263": {
+    "defaultGroup": "ИС-20-05"
+  },
+  "1602350091": {
+    "defaultGroup": "ИС-20-05"
+  },
+  "-794906526": {
+    "defaultGroup": "ИС-19-04"
+  }
+}
