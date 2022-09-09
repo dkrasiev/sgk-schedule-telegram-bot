@@ -1,21 +1,17 @@
-const fs = require("fs/promises");
-const path = require("path");
 const TelegramApi = require("node-telegram-bot-api");
 const dayjs = require("dayjs");
 const axios = require("axios").default;
+const { MongoClient, ServerApiVersion } = require("mongodb");
 
 require("dotenv").config();
 
-const { MongoClient, ServerApiVersion } = require("mongodb");
 const client = new MongoClient(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
 });
 
-client.connect(async (err) => {
-  console.log(await client.db().collection("chats").find({}).toArray());
-});
+client.connect();
 
 const scheduleApi = "https://asu.samgk.ru/api/schedule/";
 const groupsApi = "https://mfc.samgk.ru/api/groups";
@@ -24,44 +20,51 @@ const token =
   process.env.ENV_MODE == "dev"
     ? process.env.TEST_TOKEN_BOT
     : process.env.TOKEN_BOT;
+if (!token) {
+  console.log("No token finded!");
+  process.exit();
+}
 const bot = new TelegramApi(token, { polling: true });
 
 let groups = [];
-let intervals = {};
 
-async function activateSubscriptions() {
-  chats = await client.db().collection("chats").find({}).toArray();
+async function checkSchedule() {
+  const chats = await client.db().collection("chats").find().toArray();
+  const chatsWithSubscription = chats.filter((chat) => chat.subscription);
+  const groupIds = new Set(
+    chatsWithSubscription.map((chat) => chat.subscription.groupId)
+  );
 
-  for (let chat of chats) {
-    if (chat.subscription) {
-      setSubscriptionInterval(chat.chatId, chat.subscription);
+  const schedules = {};
+  for (let groupId of groupIds) {
+    const dateNext = getDateFrom(dayjs().add(1, "day"));
+    const schedule = await getSchedule(groupId, dateNext);
+
+    schedules[groupId] = schedule;
+  }
+
+  for (let chat of chatsWithSubscription) {
+    const newSchedule = schedules[chat.subscription.groupId];
+    const lastSchedule = chat.subscription.lastSchedule;
+
+    const isScheduleNew =
+      !compareSchedule(lastSchedule, newSchedule) && newSchedule;
+    const group = groups.find((group) => group.id == chat.subscription.groupId);
+
+    if (isScheduleNew) {
+      chat.subscription.lastSchedule = newSchedule;
+      await saveChatSettings(chat.chatId, { subscription: chat.subscription });
+      await bot.sendMessage(chat.chatId, "Вышло новое расписание!");
+      await bot.sendMessage(
+        chat.chatId,
+        getMessageSchedule(newSchedule, group)
+      );
     }
   }
 }
+setInterval(checkSchedule, 1800 * 1000);
 
-// (async () => {
-//   fs.readFile(path.resolve(__dirname, "data", "chats.json"), {
-//     encoding: "utf8",
-//   }).then(async (text) => {
-//     const chatsData = JSON.parse(text);
-
-//     const collection = client.db().collection("chats");
-//     await collection.deleteMany({});
-
-//     for (let chatId in chatsData) {
-//       const settings = chatsData[chatId];
-//       const newData = {
-//         chatId: chatId,
-//         defaultGroup: settings.defaultGroup || undefined,
-//         subscription: settings.subscription || undefined,
-//       };
-
-//       await collection.replaceOne({ chatId }, newData, { upsert: true });
-//     }
-//   });
-// })();
-
-activateSubscriptions();
+checkSchedule();
 fetchGroups();
 
 bot.setMyCommands([
@@ -73,84 +76,93 @@ bot.setMyCommands([
   { command: "/unsubscribe", description: "Отписаться от рассылки расписания" },
 ]);
 
+bot.onText(/\/help/, async (msg) => {
+  bot.sendMessage(msg.chat.id, await getHelpMessage(msg.chat.id));
+});
+
+bot.onText(/(\/schedule|расписание)/, async (msg) => {
+  const group =
+    getGroupFromMessage(msg.text) || (await getGroupFromChat(msg.chat.id));
+
+  if (!group) {
+    bot.sendMessage(msg.chat.id, "Группа не найдена");
+    return;
+  }
+
+  sendSchedule(msg.chat.id, group);
+});
+
+bot.onText(/\/groups/, async (msg) => {
+  await bot.sendMessage(msg.chat.id, getMessageAllGroups());
+});
+
+bot.onText(/\/start/, async (msg) => {
+  await bot.sendMessage(msg.chat.id, `Привет, ${msg.from.first_name}`);
+  await bot.sendMessage(
+    msg.chat.id,
+    "Чтобы узнать как я работаю, введи команду /help"
+  );
+});
+
+bot.onText(/\/subscribe/, async (msg) => {
+  const group =
+    getGroupFromMessage(msg.text) || (await getGroupFromChat(msg.chat.id));
+
+  if (!group) {
+    await bot.sendMessage(
+      msg.chat.id,
+      "Группа не найдена или вы ничего не ввели"
+    );
+
+    return;
+  }
+
+  stopSubscription(msg.chat.id);
+  startSubscription(msg.chat.id, group.id);
+
+  bot.sendMessage(
+    msg.chat.id,
+    "Вы подписались на рассылку расписания группы " + group.name
+  );
+});
+
+bot.onText(/\/unsubscribe/, async (msg) => {
+  if (await stopSubscription(msg.chat.id)) {
+    bot.sendMessage(msg.chat.id, "Вы отписались от рассылки расписания");
+  } else {
+    bot.sendMessage(msg.chat.id, "Вы не подписаны на рассылку расписания");
+  }
+});
+
+bot.onText(/\/setgroup/, async (msg) => {
+  const group = getGroupFromMessage(msg.text);
+
+  if (!group) {
+    bot.sendMessage(msg.chat.id, "Группа не найдена или вы ничего не ввели");
+    return;
+  }
+
+  await saveChatSettings(msg.chat.id, { defaultGroup: group.name });
+
+  await bot.sendMessage(
+    msg.chat.id,
+    "Группа " + group.name + " успешно установлена"
+  );
+});
+
 bot.on("message", async (msg) => {
   if (!msg.text) return;
 
-  log(msg);
+  console.log(msg.text);
 
-  if (msg.text.startsWith("/start")) {
-    await bot.sendMessage(msg.chat.id, `Привет, ${msg.from.first_name}`);
+  if (msg.chat.type == "private") {
+    const group = await getGroupFromMessage(msg.text);
 
-    await bot.sendMessage(
-      msg.chat.id,
-      "Чтобы узнать как я работаю, введи команду /help"
-    );
-  } else if (msg.text.startsWith("/help")) {
-    await bot.sendMessage(msg.chat.id, await getHelpMessage(msg.chat.id));
-  } else if (msg.text.startsWith("/setgroup")) {
-    const group = getGroupFromMessage(msg.text);
-
-    if (!group) {
-      bot.sendMessage(msg.chat.id, "Группа не найдена или вы ничего не ввели");
-      return;
+    if (group) {
+      await sendSchedule(msg.chat.id, group);
     }
 
-    await saveChatSettings(msg.chat.id, { defaultGroup: group.name });
-
-    await bot.sendMessage(
-      msg.chat.id,
-      "Группа " + group.name + " успешно установлена"
-    );
-  } else if (
-    msg.text.startsWith("/schedule") ||
-    msg.text.toLowerCase().includes("расписание")
-  ) {
-    const group =
-      getGroupFromMessage(msg.text) || (await getGroupFromChat(msg.chat.id));
-    if (!group) {
-      return await bot.sendMessage(msg.chat.id, "Группа не найдена");
-    }
-
-    await sendSchedule(msg.chat.id, group);
-  } else if (msg.text.startsWith("/groups")) {
-    await bot.sendMessage(msg.chat.id, getMessageAllGroups());
-  } else if (msg.text.startsWith("/subscribe")) {
-    const group =
-      getGroupFromMessage(msg.text) || (await getGroupFromChat(msg.chat.id));
-
-    if (!group) {
-      await bot.sendMessage(
-        msg.chat.id,
-        "Группа не найдена или вы ничего не ввели"
-      );
-
-      return;
-    }
-
-    stopSubscription(msg.chat.id);
-    startSubscription(msg.chat.id, group.id);
-
-    bot.sendMessage(
-      msg.chat.id,
-      "Вы подписались на рассылку расписания группы " + group.name
-    );
-  } else if (msg.text.startsWith("/unsubscribe")) {
-    if (await stopSubscription(msg.chat.id)) {
-      bot.sendMessage(msg.chat.id, "Вы отписались от рассылки расписания");
-    } else {
-      bot.sendMessage(msg.chat.id, "Вы не подписаны на рассылку расписания");
-    }
-  } else {
-    if (msg.chat.type == "private") {
-      const group = await getGroupFromMessage(msg.text);
-
-      if (group) {
-        await sendSchedule(msg.chat.id, group);
-      } else {
-        await bot.sendMessage(msg.chat.id, "Я тебя не понимаю");
-      }
-      return;
-    }
+    return;
   }
 });
 
@@ -215,31 +227,21 @@ function getGroupFromMessage(message) {
 }
 
 async function saveChatSettings(chatId, settings) {
+  if (!chatId) return;
+
   chatId = chatId.toString();
   const collection = client.db().collection("chats");
   const chatSettings = await collection.findOne({ chatId });
 
   if (settings) {
-    const newChatSettings = { ...chatSettings, ...settings };
+    const newChatSettings = { chatId, ...chatSettings, ...settings };
     await collection.replaceOne({ chatId }, newChatSettings, { upsert: true });
-  }
-
-  console.log(await collection.findOne({ chatId }));
-}
-
-function log(message) {
-  const title = message.chat.title;
-  const username = message.from.username;
-  const text = message.text;
-
-  if (title) {
-    console.log(`${title}, ${username}: ${text}`);
-  } else {
-    console.log(`${username}: ${text}`);
   }
 }
 
 async function getGroupFromChat(chatId) {
+  if (!chatId) return;
+
   chatId = chatId.toString();
   let group = null;
   const chat = await getChatSettings(chatId);
@@ -281,19 +283,14 @@ function numToTime(num) {
 }
 
 async function getSchedule(groupId, date) {
-  try {
-    const url = scheduleApi + groupId + "/" + date.format("YYYY-MM-DD");
-    console.log(url);
-    const schedule = (await axios.get(url)).data;
+  const url = scheduleApi + groupId + "/" + date.format("YYYY-MM-DD");
+  const schedule = (await axios.get(url)).data;
 
-    if (schedule) {
-      return schedule;
-    }
-
-    return;
-  } catch (error) {
-    console.log(error);
+  if (schedule) {
+    return schedule;
   }
+
+  return;
 }
 
 async function getHelpMessage(chatId) {
@@ -330,24 +327,21 @@ async function fetchGroups() {
     .filter((group) => group.name != "--");
 }
 
-function startSubscription(chatId, groupId) {
+async function startSubscription(chatId, groupId) {
+  const dateNext = getDateFrom(getDateFrom(dayjs().add(1, "day")));
+  const currentSchedule = await getSchedule(groupId, dateNext);
+
   const subscription = {
     groupId,
-    lastSchedule: null,
+    lastSchedule: currentSchedule,
   };
-
-  const dateNext = getDateFrom(dayjs().add(1, "day"));
-  getSchedule(groupId, dateNext).then((schedule) => {
-    subscription.lastSchedule = schedule;
-    saveChatSettings(chatId, { subscription });
-  });
-
-  setSubscriptionInterval(chatId, subscription);
 
   saveChatSettings(chatId, { subscription });
 }
 
 async function stopSubscription(chatId) {
+  if (!chatId) return;
+
   chatId = chatId.toString();
 
   const chatSettings = await getChatSettings(chatId);
@@ -356,50 +350,19 @@ async function stopSubscription(chatId) {
     return false;
   }
 
-  clearInterval(intervals[chatId]);
-  delete intervals[chatId];
-
   await saveChatSettings(chatId, { subscription: null });
 
   return true;
 }
 
 async function getChatSettings(chatId) {
+  if (!chatId) return;
+
   chatId = chatId.toString();
   const collection = client.db().collection("chats");
   const chat = await collection.findOne({ chatId });
 
   return chat;
-}
-
-function setSubscriptionInterval(chatId, subscription) {
-  intervals[chatId] = setInterval(async () => {
-    const dateNext = getDateFrom(dayjs().add(1, "day"));
-
-    const group = groups.find((value) => value.id == subscription.groupId);
-
-    const schedule = await getSchedule(group.id, dateNext);
-
-    if (schedule?.lessons?.length == 0) return;
-    if (!subscription.lastSchedule) {
-      subscription.lastSchedule = schedule;
-      return;
-    }
-
-    if (compareSchedule(subscription.lastSchedule, schedule)) {
-      console.log(`Расписание для группы ${group.name} не изменилось`);
-      return;
-    }
-
-    subscription.lastSchedule = schedule;
-
-    saveChatSettings(chatId);
-
-    await bot.sendMessage(chatId, "Вышло новое расписание!");
-    await bot.sendMessage(chatId, getMessageSchedule(schedule, group));
-  }, 1800 * 1000);
-
-  console.log("Интервал создан");
 }
 
 function compareSchedule(a, b) {
