@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "dev": "cross-env ENV_MODE=dev nodemon src/index.js",
-    "start": "cross-env ENV_MODE=production node src/index.js"
+    "start": "cross-env ENV_MODE=production node src/index.js",
+    "lint": "eslint ./src",
+    "lint:fix": "eslint ./src --fix"
   },
   "engines": {
     "node": "18.x"
