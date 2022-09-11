@@ -1,6 +1,7 @@
 const TelegramApi = require("node-telegram-bot-api");
 const dayjs = require("dayjs");
 const mongoose = require("mongoose");
+const { default: axios } = require("axios");
 
 const chats = require("./models/chat.model");
 const groups = require("./models/group.model");
@@ -14,7 +15,6 @@ const {
 } = require("./helpers/messageGenerator");
 
 const chatService = require("./services/chatService");
-const { default: axios } = require("axios");
 
 require("dotenv").config();
 
