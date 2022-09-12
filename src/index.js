@@ -86,11 +86,6 @@ const start = async () => {
 			const group =
         (await getGroupFromMessage(msg.text)) ||
         (await getGroupByChatId(msg.chat.id));
-				
-			const chat = await chats.findOne({ id: msg.chat.id });
-			if (!chat) {
-				await chats.create({ id: msg.chat.id });
-			}
 
 			if (!group) {
 				await bot.sendMessage(
@@ -140,6 +135,11 @@ const start = async () => {
 
 		bot.on("message", async (msg) => {
 			console.log(`[${dayjs().format("HH:MM")}] ${msg.from.username}: ${msg.text}`);
+
+			const chat = await chats.findOne({ id: msg.chat.id });
+			if (!chat) {
+				await chats.create({ id: msg.chat.id });
+			}
 
 			if (msg.chat.type === "private" && !msg.text.startsWith("/")) {
 				const group = await getGroupFromMessage(msg.text);
