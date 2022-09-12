@@ -1,4 +1,4 @@
-const { Telegraf } = require("telegraf");
+const { Telegraf, Markup } = require("telegraf");
 
 const dayjs = require("dayjs");
 const mongoose = require("mongoose");
@@ -74,7 +74,35 @@ const start = async () => {
 		});
 
 		bot.help(async (ctx) => {
-			await ctx.reply(await getHelpMessage(ctx.chat.id));
+			const chat = await chats.findOne({ id: ctx.chat.id });
+
+			const inlineKeyboard = chat.defaultGroup
+				? Markup.inlineKeyboard([
+					Markup.button.callback(
+						"Удалить группу по умолчанию",
+						"remove_default_group"
+					),
+				])
+					.oneTime()
+					.resize()
+				: undefined;
+
+			await ctx.reply(await getHelpMessage(ctx.chat.id), inlineKeyboard);
+		});
+
+		bot.action("remove_default_group", async (ctx) => {
+			const chat = await chats.findOne({ id: ctx.chat.id });
+			let resultMessage = "Группа по умолчанию удалена";
+
+			if (!chat.defaultGroup) {
+				resultMessage = "Группа по умолчанию не задана";
+			} else {
+				chat.defaultGroup = null;
+				await chat.save();
+			}
+
+			await ctx.answerCbQuery();
+			await ctx.reply(resultMessage);
 		});
 
 		bot.command("groups", async (ctx) => {
@@ -152,7 +180,7 @@ const start = async () => {
 		bot.hears(/[А-я]{2,3}[\W]?\d{2}[\W]?\d{2}/g, async (ctx) => {
 			const group = await getGroupFromMessage(ctx.message.text);
 			const chat = await chats.findOne({ id: ctx.chat.id });
-				
+
 			if (ctx.chat.type === "private") {
 				if (chat && group) {
 					await sendSchedule(ctx, chat, group);
@@ -163,8 +191,7 @@ const start = async () => {
 		});
 
 		bot.on("message", async (ctx, next) => {
-			if (ctx.chat.type === "private") 
-				await ctx.reply("Я тебя не понимаю");
+			if (ctx.chat.type === "private") await ctx.reply("Я тебя не понимаю");
 
 			next();
 		});
