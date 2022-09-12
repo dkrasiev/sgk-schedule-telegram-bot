@@ -10,7 +10,7 @@
     "lint:fix": "eslint ./src --fix"
   },
   "engines": {
-    "node": "18.x"
+    "node": "16.x"
   },
   "author": "Dmitry Krasiev",
   "license": "ISC",
