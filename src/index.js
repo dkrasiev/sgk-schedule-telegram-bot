@@ -1,4 +1,5 @@
-const TelegramApi = require("node-telegram-bot-api");
+const { Telegraf } = require("telegraf");
+
 const dayjs = require("dayjs");
 const mongoose = require("mongoose");
 const { default: axios } = require("axios");
@@ -18,12 +19,12 @@ const chatService = require("./services/chatService");
 
 require("dotenv").config();
 
-let token = process.env.TOKEN_BOT;
+let token = process.env.BOT_TOKEN;
 if (process.env.ENV_MODE === "dev") {
-	token = process.env.TEST_TOKEN_BOT;
+	token = process.env.BOT_TOKEN_TEST;
 }
 
-const bot = new TelegramApi(token, { polling: true });
+const bot = new Telegraf(token);
 
 const botCommands = [
 	{ command: "/schedule", description: "Показать расписание" },
@@ -40,7 +41,7 @@ const botCommands = [
 	},
 ];
 
-bot.setMyCommands(botCommands);
+bot.telegram.setMyCommands(botCommands);
 
 const start = async () => {
 	try {
@@ -50,106 +51,129 @@ const start = async () => {
 
 		setInterval(checkSchedule, 1800 * 1000);
 
-		bot.onText(/\/help/, async (msg) => {
-			bot.sendMessage(msg.chat.id, await getHelpMessage(msg.chat.id));
-		});
-
-		bot.onText(/(\/schedule|расписание)/, async (msg) => {
-			const group =
-        (await getGroupFromMessage(msg.text)) ||
-        (await getGroupByChatId(msg.chat.id));
-			const chat = await chats.findOne({ id: msg.chat.id });
-
-			if (!group) {
-				bot.sendMessage(msg.chat.id, "Группа не найдена");
-				return;
+		bot.on("message", async (ctx, next) => {
+			const chat = await chats.findOne({ id: ctx.chat.id });
+			if (!chat) {
+				await chats.create({ id: ctx.chat.id });
 			}
 
-			await sendSchedule(chat, group);
+			next();
 		});
 
-		bot.onText(/\/groups/, async (msg) => {
-			await bot.sendMessage(msg.chat.id, await getMessageAllGroups());
-		});
-
-		bot.onText(/\/start/, async (msg) => {
-			await bot.sendMessage(msg.chat.id, `Привет, ${msg.from.first_name}`);
-			await bot.sendMessage(
-				msg.chat.id,
-				"Чтобы узнать как я работаю, введи команду /help"
+		bot.on("message", async (ctx, next) => {
+			console.log(
+				`[${dayjs().format("HH:mm")}] ${ctx.from.username}: ${ctx.message.text}`
 			);
 
-			await chats.create({ id: msg.chat.id });
+			next();
 		});
 
-		bot.onText(/\/subscribe/, async (msg) => {
-			const group =
-        (await getGroupFromMessage(msg.text)) ||
-        (await getGroupByChatId(msg.chat.id));
+		bot.start(async (ctx) => {
+			await ctx.reply(`Привет, ${ctx.from.first_name}`);
+			await ctx.reply("Чтобы узнать как я работаю, введи команду /help");
+		});
+
+		bot.help(async (ctx) => {
+			await ctx.reply(await getHelpMessage(ctx.chat.id));
+		});
+
+		bot.command("groups", async (ctx) => {
+			await ctx.reply(await getMessageAllGroups());
+		});
+
+		bot.command("setgroup", async (ctx) => {
+			const group = await getGroupFromMessage(ctx.message.text);
+			const chat = await chats.findOne({ id: ctx.chat.id });
 
 			if (!group) {
-				await bot.sendMessage(
-					msg.chat.id,
-					"Группа не найдена или вы ничего не ввели"
-				);
+				await ctx.reply("Группа не найдена или Вы ничего не ввели");
 				return;
 			}
 
-			await chatService.startSubscription(msg.chat.id, group.id);
+			chat.defaultGroup = group.id;
+			await chat.save();
 
-			await bot.sendMessage(
-				msg.chat.id,
+			await ctx.reply(`Группа ${group.name} установлена по-умолчанию`);
+		});
+
+		bot.command("subscribe", async (ctx) => {
+			const group =
+        (await getGroupFromMessage(ctx.message.text)) ||
+        (await getGroupByChatId(ctx.chat.id));
+
+			if (!group) {
+				await ctx.reply("Группа не найдена или вы ничего не ввели");
+				return;
+			}
+
+			await chatService.startSubscription(ctx.chat.id, group.id);
+			await ctx.reply(
 				`Вы подписались на рассылку расписания группы ${group.name}`
 			);
 		});
 
-		bot.onText(/\/unsubscribe/, async (msg) => {
-			if (await chatService.stopSubscription(msg.chat.id)) {
-				bot.sendMessage(msg.chat.id, "Вы отписались от рассылки расписания");
+		bot.command("unsubscribe", async (ctx) => {
+			const chatId = ctx.chat.id;
+			if (await chatService.stopSubscription(chatId)) {
+				await ctx.reply("Вы отписались от рассылки расписания");
 			} else {
-				bot.sendMessage(msg.chat.id, "Вы не подписаны на рассылку расписания");
+				await ctx.reply("Вы не подписаны на рассылку расписания");
 			}
 		});
 
-		bot.onText(/\/setgroup/, async (msg) => {
-			const group = await getGroupFromMessage(msg.text);
+		bot.command("schedule", async (ctx) => {
+			const group =
+        (await getGroupFromMessage(ctx.message.text)) ||
+        (await getGroupByChatId(ctx.chat.id));
+			const chat = await chats.findOne({ id: ctx.chat.id });
+
 			if (!group) {
-				await bot.sendMessage(
-					msg.chat.id,
-					"Группа не найдена или Вы ничего не ввели"
-				);
+				await ctx.reply("Группа не найдена");
 				return;
 			}
 
-			const chat = await chats.findOne({ id: msg.chat.id });
-
-			chat.defaultGroup = group.id;
-
-			await chat.save();
-
-			await bot.sendMessage(
-				chat.id,
-				`Группа ${group.name} установлена по-умолчанию`
-			);
+			await sendSchedule(ctx, chat, group);
 		});
 
-		bot.on("message", async (msg) => {
-			console.log(`[${dayjs().format("HH:mm")}] ${msg.from.username}: ${msg.text}`);
+		bot.hears(/расписание/, async (ctx) => {
+			const group =
+        (await getGroupFromMessage(ctx.message.text)) ||
+        (await getGroupByChatId(ctx.chat.id));
+			const chat = await chats.findOne({ id: ctx.chat.id });
 
-			const chat = await chats.findOne({ id: msg.chat.id });
-			if (!chat) {
-				await chats.create({ id: msg.chat.id });
+			if (!group) {
+				await ctx.reply("Группа не найдена");
+				return;
 			}
 
-			if (msg.chat.type === "private" && !msg.text.startsWith("/")) {
-				const group = await getGroupFromMessage(msg.text);
-				const chat = await chats.findOne({ id: msg.chat.id });
+			await sendSchedule(ctx, chat, group);
+		});
 
+		bot.hears(/[А-я]{2,3}[\W]?\d{2}[\W]?\d{2}/g, async (ctx) => {
+			const group = await getGroupFromMessage(ctx.message.text);
+			const chat = await chats.findOne({ id: ctx.chat.id });
+				
+			if (ctx.chat.type === "private") {
 				if (chat && group) {
-					await sendSchedule(chat, group);
+					await sendSchedule(ctx, chat, group);
+				} else {
+					await ctx.reply("Группа не найдена");
 				}
 			}
 		});
+
+		bot.on("message", async (ctx, next) => {
+			if (ctx.chat.type === "private") 
+				await ctx.reply("Я тебя не понимаю");
+
+			next();
+		});
+
+		bot.launch();
+
+		// Enable graceful stop
+		process.once("SIGINT", () => bot.stop("SIGINT"));
+		process.once("SIGTERM", () => bot.stop("SIGTERM"));
 	} catch (error) {
 		console.log(error);
 	}
@@ -206,32 +230,39 @@ async function checkSchedule() {
 			delete lesson._id;
 		});
 
-		if (!compareSchedule(lastSchedule, newSchedule) && newSchedule?.lessons?.length) {
+		if (
+			!compareSchedule(lastSchedule, newSchedule) &&
+      newSchedule?.lessons?.length
+		) {
 			chat.subscription.lastSchedule = newSchedule;
 			await chat.save();
 
 			const message = await getMessageSchedule(newSchedule, group);
 
-			await bot.sendMessage(chat.id, "Вышло новое расписание!");
-			await bot.sendMessage(chat.id, message);
+			await bot.telegram.sendMessage(chat.id, "Вышло новое расписание!");
+			await bot.telegram.sendMessage(chat.id, message);
 		}
 	}
 }
 
-async function sendSchedule(chat, group) {
-	const currentDate = dayjs();
+async function sendSchedule(ctx, chat, group) {
+	if (!chat) {
+		chat = await chats.findOne({ id: ctx.chat.id });
+	}
 
+	if (!group) {
+		group = await groups.findOne({ id: chat.defaultGroup });
+	}
+
+	const currentDate = dayjs();
 	const firstDate = getNextWorkDate(currentDate);
 	const secondDate = getNextWorkDate(firstDate.add(1, "day"));
 
 	const scheduleToday = await getSchedule(group.id, firstDate);
 	const scheduleNext = await getSchedule(group.id, secondDate);
 
-	await bot.sendMessage(
-		chat.id,
-		await getMessageSchedule(scheduleToday, group)
-	);
-	await bot.sendMessage(chat.id, await getMessageSchedule(scheduleNext, group));
+	await ctx.reply(await getMessageSchedule(scheduleToday, group));
+	await ctx.reply(await getMessageSchedule(scheduleNext, group));
 }
 
 async function getSchedule(groupId, date) {
@@ -246,7 +277,7 @@ async function fetchGroups() {
 		(group) => group.name !== "--"
 	);
 
-	if (fetchedGroups) {
+	if (fetchedGroups?.length) {
 		await groups.deleteMany();
 		await groups.insertMany(fetchedGroups);
 	}
