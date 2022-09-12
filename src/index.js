@@ -134,7 +134,7 @@ const start = async () => {
 		});
 
 		bot.on("message", async (msg) => {
-			console.log(msg.from.username + ": " + msg.text);
+			console.log(`[${dayjs().format("HH:MM")}] ${msg.from.username}: ${msg.text}`);
 
 			if (msg.chat.type === "private" && !msg.text.startsWith("/")) {
 				const group = await getGroupFromMessage(msg.text);
@@ -168,7 +168,7 @@ async function getGroupFromMessage(message) {
 async function getGroupByChatId(chatId) {
 	const chat = await chats.findOne({ id: chatId });
 
-	const group = await groups.findOne({ id: chat.defaultGroup });
+	const group = await groups.findOne({ id: chat?.defaultGroup });
 
 	return group;
 }
