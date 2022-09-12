@@ -140,7 +140,7 @@ const start = async () => {
 				const group = await getGroupFromMessage(msg.text);
 				const chat = await chats.findOne({ id: msg.chat.id });
 
-				if (group) {
+				if (chat && group) {
 					await sendSchedule(chat, group);
 				}
 			}
