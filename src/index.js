@@ -30,7 +30,7 @@ const botCommands = [
 	{ command: "/schedule", description: "Показать расписание" },
 	{ command: "/help", description: "Показать помощь" },
 	{ command: "/groups", description: "Показать все существующие группы" },
-	{ command: "/setgroup", description: "Изменить расписание по-умолчанию" },
+	{ command: "/setgroup", description: "Изменить группу по-умолчанию" },
 	{
 		command: "/subscribe",
 		description: "Подписаться на обновления расписания",
