@@ -134,7 +134,7 @@ const start = async () => {
 		});
 
 		bot.on("message", async (msg) => {
-			console.log(msg.text);
+			console.log(msg.from.username + ": " + msg.text);
 
 			if (msg.chat.type === "private" && !msg.text.startsWith("/")) {
 				const group = await getGroupFromMessage(msg.text);
@@ -199,7 +199,7 @@ async function checkSchedule() {
 			delete lesson._id;
 		});
 
-		if (!compareSchedule(lastSchedule, newSchedule) && newSchedule) {
+		if (!compareSchedule(lastSchedule, newSchedule) && newSchedule?.lessons?.length) {
 			chat.subscription.lastSchedule = newSchedule;
 			await chat.save();
 
