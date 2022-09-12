@@ -69,7 +69,7 @@ const start = async () => {
 		});
 
 		bot.onText(/\/groups/, async (msg) => {
-			await bot.sendMessage(msg.chat.id, getMessageAllGroups());
+			await bot.sendMessage(msg.chat.id, await getMessageAllGroups());
 		});
 
 		bot.onText(/\/start/, async (msg) => {
@@ -134,7 +134,7 @@ const start = async () => {
 		});
 
 		bot.on("message", async (msg) => {
-			console.log(`[${dayjs().format("HH:MM")}] ${msg.from.username}: ${msg.text}`);
+			console.log(`[${dayjs().format("HH:mm")}] ${msg.from.username}: ${msg.text}`);
 
 			const chat = await chats.findOne({ id: msg.chat.id });
 			if (!chat) {
