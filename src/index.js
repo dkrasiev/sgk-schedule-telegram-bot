@@ -30,7 +30,7 @@ const botCommands = [
 	{ command: "/schedule", description: "Показать расписание" },
 	{ command: "/help", description: "Показать помощь" },
 	{ command: "/groups", description: "Показать все существующие группы" },
-	{ command: "/setgroup", description: "Изменить расписание по-умолчанию" },
+	{ command: "/setgroup", description: "Изменить группу по-умолчанию" },
 	{
 		command: "/subscribe",
 		description: "Подписаться на обновления расписания",
@@ -62,7 +62,7 @@ const start = async () => {
 
 		bot.on("message", async (ctx, next) => {
 			console.log(
-				`[${dayjs().format("HH:mm")}] ${ctx.from.username}: ${ctx.message.text}`
+				`[${dayjs().format("HH:mm")}] ${ctx.from.username || ctx.from.first_name + " " + ctx.from.last_name}: ${ctx.message.text}`
 			);
 
 			next();
