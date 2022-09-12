@@ -61,7 +61,7 @@ const start = async () => {
 			const chat = await chats.findOne({ id: msg.chat.id });
 
 			if (!group) {
-				bot.sendMessage(chat.id, "Группа не найдена");
+				bot.sendMessage(msg.chat.id, "Группа не найдена");
 				return;
 			}
 
@@ -69,7 +69,7 @@ const start = async () => {
 		});
 
 		bot.onText(/\/groups/, async (msg) => {
-			await bot.sendMessage(msg.chat.id, getMessageAllGroups());
+			await bot.sendMessage(msg.chat.id, await getMessageAllGroups());
 		});
 
 		bot.onText(/\/start/, async (msg) => {
@@ -134,13 +134,18 @@ const start = async () => {
 		});
 
 		bot.on("message", async (msg) => {
-			console.log(msg.from.username + ": " + msg.text);
+			console.log(`[${dayjs().format("HH:mm")}] ${msg.from.username}: ${msg.text}`);
+
+			const chat = await chats.findOne({ id: msg.chat.id });
+			if (!chat) {
+				await chats.create({ id: msg.chat.id });
+			}
 
 			if (msg.chat.type === "private" && !msg.text.startsWith("/")) {
 				const group = await getGroupFromMessage(msg.text);
 				const chat = await chats.findOne({ id: msg.chat.id });
 
-				if (group) {
+				if (chat && group) {
 					await sendSchedule(chat, group);
 				}
 			}
@@ -168,12 +173,14 @@ async function getGroupFromMessage(message) {
 async function getGroupByChatId(chatId) {
 	const chat = await chats.findOne({ id: chatId });
 
-	const group = await groups.findOne({ id: chat.defaultGroup });
+	const group = await groups.findOne({ id: chat?.defaultGroup });
 
 	return group;
 }
 
 async function checkSchedule() {
+	console.log(`[${dayjs().format("HH:mm")}] checking schedule...`);
+
 	const allChats = await chats.find();
 	const chatsWithSubscription = allChats.filter(
 		(chat) => chat.subscription.groupId

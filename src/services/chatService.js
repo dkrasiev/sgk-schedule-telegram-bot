@@ -16,8 +16,6 @@ class ChatService {
 		};
 
 		await chat.save();
-
-		console.log(await chats.find({ id: chatId}));
 	}
 
 	async stopSubscription(chatId) {
