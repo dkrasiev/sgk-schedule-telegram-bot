@@ -1,4 +1,5 @@
 const groups = require("../models/group.model");
+const chats = require("../models/chat.model");
 const numToTime = require("./numToTime");
 
 class MessageGenerator {
@@ -23,16 +24,17 @@ class MessageGenerator {
 	}
 
 	async getHelpMessage(chatId) {
-		const defaultGroup = await groups.findOne({id: chatId});
+		const chat = await chats.findOne({ id: chatId });
+		const defaultGroup = await groups.findOne({id: chat.defaultGroup });
   
 		let message =
       "Для получения расписания напишите:" +
       "\nрасписание <номер группы>" +
       "\n\nПример номера группы: ис-19-04, ис1904, ис 19 04\n";
-  
+			
 		message += defaultGroup
-			? `По-умолчанию выбрана группа ${defaultGroup.name}`
-			: "Группа по-умолчанию не выбрана. " +
+			? `По умолчанию выбрана группа ${defaultGroup.name}`
+			: "Группа по умолчанию не выбрана. " +
         "Чтобы установить группу введите \"/setgroup <номер группы>\"";
   
 		return message;
