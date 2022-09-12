@@ -61,7 +61,7 @@ const start = async () => {
 			const chat = await chats.findOne({ id: msg.chat.id });
 
 			if (!group) {
-				bot.sendMessage(chat.id, "Группа не найдена");
+				bot.sendMessage(msg.chat.id, "Группа не найдена");
 				return;
 			}
 
@@ -86,6 +86,11 @@ const start = async () => {
 			const group =
         (await getGroupFromMessage(msg.text)) ||
         (await getGroupByChatId(msg.chat.id));
+				
+			const chat = await chats.findOne({ id: msg.chat.id });
+			if (!chat) {
+				await chats.create({ id: msg.chat.id });
+			}
 
 			if (!group) {
 				await bot.sendMessage(
