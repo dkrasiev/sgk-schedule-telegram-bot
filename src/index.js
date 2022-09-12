@@ -62,7 +62,7 @@ const start = async () => {
 
 		bot.on("message", async (ctx, next) => {
 			console.log(
-				`[${dayjs().format("HH:mm")}] ${ctx.from.username}: ${ctx.message.text}`
+				`[${dayjs().format("HH:mm")}] ${ctx.from.username || ctx.from.first_name + " " + ctx.from.last_name}: ${ctx.message.text}`
 			);
 
 			next();
