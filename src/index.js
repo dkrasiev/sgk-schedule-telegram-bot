@@ -179,6 +179,8 @@ async function getGroupByChatId(chatId) {
 }
 
 async function checkSchedule() {
+	console.log(`[${dayjs().format("HH:mm")}] checking schedule...`);
+
 	const allChats = await chats.find();
 	const chatsWithSubscription = allChats.filter(
 		(chat) => chat.subscription.groupId
