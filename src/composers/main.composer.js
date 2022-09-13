@@ -1,4 +1,3 @@
-const { chats } = require("../models");
 const { Composer, Markup } = require("telegraf");
 
 const {
@@ -6,8 +5,6 @@ const {
   stopSubscription,
 } = require("../services/chat.service");
 const {
-  getGroupFromMessage,
-  getGroupByChatId,
   sendSchedule,
   getHelpMessage,
   getMessageAllGroups,
@@ -28,9 +25,7 @@ composer.start(async (ctx) => {
 });
 
 composer.help(async (ctx) => {
-  const chat = await chats.findOne({ id: ctx.chat.id });
-
-  const inlineKeyboard = chat.defaultGroup
+  const inlineKeyboard = ctx.data.chat.defaultGroup
     ? Markup.inlineKeyboard([
         Markup.button.callback(
           "Удалить группу по умолчанию",
@@ -45,14 +40,13 @@ composer.help(async (ctx) => {
 });
 
 composer.action("remove_default_group", async (ctx) => {
-  const chat = await chats.findOne({ id: ctx.chat.id });
   let resultMessage = "Группа по умолчанию удалена";
 
-  if (!chat.defaultGroup) {
+  if (!ctx.data.chat.defaultGroup) {
     resultMessage = "Группа по умолчанию не задана";
   } else {
-    chat.defaultGroup = null;
-    await chat.save();
+    ctx.data.chat.defaultGroup = null;
+    await ctx.data.chat.save();
   }
 
   await ctx.answerCbQuery();
@@ -64,37 +58,31 @@ composer.command("groups", async (ctx) => {
 });
 
 composer.command("setgroup", async (ctx) => {
-  const group = await getGroupFromMessage(ctx.message.text);
-  const chat = await chats.findOne({ id: ctx.chat.id });
-
-  if (!group) {
+  if (!ctx.data.group) {
     await ctx.reply("Группа не найдена или Вы ничего не ввели");
     return;
   }
 
-  chat.defaultGroup = group.id;
-  await chat.save();
+  ctx.data.chat.defaultGroup = ctx.data.group.id;
+  await ctx.data.chat.save();
 
-  await ctx.reply(`Группа ${group.name} установлена по-умолчанию`);
+  await ctx.reply(`Группа ${ctx.data.group.name} установлена по-умолчанию`);
 });
 
 composer.command("subscribe", async (ctx) => {
-  const group =
-    (await getGroupFromMessage(ctx.message.text)) ||
-    (await getGroupByChatId(ctx.chat.id));
-
-  if (!group) {
+  if (!ctx.data.group) {
     await ctx.reply("Группа не найдена или вы ничего не ввели");
     return;
   }
 
-  await startSubscription(ctx.chat.id, group.id);
-  await ctx.reply(`Вы подписались на рассылку расписания группы ${group.name}`);
+  await startSubscription(ctx.chat.id, ctx.data.group.id);
+  await ctx.reply(
+    `Вы подписались на рассылку расписания группы ${ctx.data.group.name}`
+  );
 });
 
 composer.command("unsubscribe", async (ctx) => {
-  const chatId = ctx.chat.id;
-  if (await stopSubscription(chatId)) {
+  if (await stopSubscription(ctx.chat.id)) {
     await ctx.reply("Вы отписались от рассылки расписания");
   } else {
     await ctx.reply("Вы не подписаны на рассылку расписания");
@@ -102,58 +90,39 @@ composer.command("unsubscribe", async (ctx) => {
 });
 
 composer.command("schedule", async (ctx) => {
-  const group =
-    (await getGroupFromMessage(ctx.message.text)) ||
-    (await getGroupByChatId(ctx.chat.id));
-  const chat = await chats.findOne({ id: ctx.chat.id });
-
-  if (!group) {
+  if (!ctx.data.group) {
     await ctx.reply("Группа не найдена");
     return;
   }
 
-  await sendSchedule(ctx, chat, group);
+  await sendSchedule(ctx, ctx.data.chat, ctx.data.group);
 });
 
 composer.command("today", async (ctx) => {
-  const group =
-    (await getGroupFromMessage(ctx.message.text)) ||
-    (await getGroupByChatId(ctx.chat.id));
-  const schedule = await getSchedule(group.id, dayjs());
+  const schedule = await getSchedule(ctx.data.group.id, dayjs());
 
-  await ctx.reply(await getMessageSchedule(schedule, group));
+  await ctx.reply(await getMessageSchedule(schedule, ctx.data.group));
 });
 
 composer.command("tomorrow", async (ctx) => {
-  const group =
-    (await getGroupFromMessage(ctx.message.text)) ||
-    (await getGroupByChatId(ctx.chat.id));
-  const schedule = await getSchedule(group.id, dayjs().add(1, "day"));
+  const schedule = await getSchedule(ctx.data.group.id, dayjs().add(1, "day"));
 
-  await ctx.reply(await getMessageSchedule(schedule, group));
+  await ctx.reply(await getMessageSchedule(schedule, ctx.data.group));
 });
 
 composer.hears(/расписание/, async (ctx) => {
-  const group =
-    (await getGroupFromMessage(ctx.message.text)) ||
-    (await getGroupByChatId(ctx.chat.id));
-  const chat = await chats.findOne({ id: ctx.chat.id });
-
-  if (!group) {
+  if (!ctx.data.group) {
     await ctx.reply("Группа не найдена");
     return;
   }
 
-  await sendSchedule(ctx, chat, group);
+  await sendSchedule(ctx, ctx.data.chat, ctx.data.group);
 });
 
 composer.hears(/[А-я]{1,3}[\W]?\d{2}[\W]?\d{2}/g, async (ctx) => {
-  const group = await getGroupFromMessage(ctx.message.text);
-  const chat = await chats.findOne({ id: ctx.chat.id });
-
   if (ctx.chat.type === "private") {
-    if (chat && group) {
-      await sendSchedule(ctx, chat, group);
+    if (ctx.data.chat && ctx.data.group) {
+      await sendSchedule(ctx, ctx.data.chat, ctx.data.group);
     } else {
       await ctx.reply("Группа не найдена");
     }
