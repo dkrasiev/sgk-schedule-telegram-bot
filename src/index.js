@@ -177,7 +177,7 @@ const start = async () => {
 			await sendSchedule(ctx, chat, group);
 		});
 
-		bot.hears(/[А-я]{2,3}[\W]?\d{2}[\W]?\d{2}/g, async (ctx) => {
+		bot.hears(/[А-я]{1,3}[\W]?\d{2}[\W]?\d{2}/g, async (ctx) => {
 			const group = await getGroupFromMessage(ctx.message.text);
 			const chat = await chats.findOne({ id: ctx.chat.id });
 
@@ -209,7 +209,7 @@ const start = async () => {
 start();
 
 async function getGroupFromMessage(message) {
-	const regexArr = message.match(/[А-я]{2,3}[\W]?\d{2}[\W]?\d{2}/g);
+	const regexArr = message.match(/[А-я]{1,3}[\W]?\d{2}[\W]?\d{2}/g);
 	const groupName = regexArr
 		? regexArr[0].replaceAll("-", "").replaceAll(" ", "").toLowerCase()
 		: "";
