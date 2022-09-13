@@ -1,4 +1,4 @@
-const chats = require("../models/chat.model");
+const { chats } = require("../models");
 
 module.exports = async (ctx, next) => {
   const chatId = ctx.chat.id;
