@@ -43,7 +43,10 @@ const start = async () => {
 start();
 
 async function checkSchedule() {
-  console.log(`[${dayjs().format("HH:mm")}] checking schedule...`);
+  console.log(
+    "\x1b[34m%s\x1b[0m",
+    `[${dayjs().format("HH:mm")}] checking schedule...`
+  );
 
   const allChats = await chats.find();
   const chatsWithSubscription = allChats.filter(
