@@ -8,17 +8,19 @@ if (process.env.ENV_MODE === "dev") {
 const bot = new Telegraf(token);
 
 const botCommands = [
-  { command: "/schedule", description: "Показать расписание" },
-  { command: "/help", description: "Показать помощь" },
-  { command: "/groups", description: "Показать все существующие группы" },
-  { command: "/setgroup", description: "Изменить группу по-умолчанию" },
+  { command: "schedule", description: "Расписание на два дня" },
+  { command: "today", description: "Расписание на сегодня" },
+  { command: "tomorrow", description: "Расписание на завтра" },
+  { command: "help", description: "Показать помощь" },
+  { command: "groups", description: "Показать все существующие группы" },
+  { command: "setgroup", description: "Изменить группу по-умолчанию" },
   {
-    command: "/subscribe",
+    command: "subscribe",
     description: "Подписаться на обновления расписания",
   },
   {
-    command: "/unsubscribe",
-    description: "Отписаться от обновления расписания",
+    command: "unsubscribe",
+    description: "Отписаться от обновлений расписания",
   },
 ];
 
