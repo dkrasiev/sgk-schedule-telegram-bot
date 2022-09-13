@@ -3,7 +3,7 @@ const { Composer, Markup } = require("telegraf");
 const {
   startSubscription,
   stopSubscription,
-} = require("../services/chat.service");
+} = require("../helpers/subscription");
 const {
   sendSchedule,
   getHelpMessage,
