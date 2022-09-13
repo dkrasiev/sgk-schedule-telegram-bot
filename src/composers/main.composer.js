@@ -10,6 +10,7 @@ const {
   getMessageAllGroups,
   getMessageSchedule,
   getSchedule,
+  getGroupFromMessage,
 } = require("../helpers/utils");
 const dayjs = require("dayjs");
 
@@ -58,23 +59,20 @@ composer.command("groups", async (ctx) => {
 });
 
 composer.command("setgroup", async (ctx) => {
-  if (!ctx.data.group) {
+  const group = await getGroupFromMessage(ctx.message.text);
+
+  if (group) {
+    ctx.data.chat.defaultGroup = group.id;
+    await ctx.data.chat.save();
+  } else {
     await ctx.reply("Группа не найдена или Вы ничего не ввели");
     return;
   }
-
-  ctx.data.chat.defaultGroup = ctx.data.group.id;
-  await ctx.data.chat.save();
 
   await ctx.reply(`Группа ${ctx.data.group.name} установлена по-умолчанию`);
 });
 
 composer.command("subscribe", async (ctx) => {
-  if (!ctx.data.group) {
-    await ctx.reply("Группа не найдена или вы ничего не ввели");
-    return;
-  }
-
   await startSubscription(ctx.chat.id, ctx.data.group.id);
   await ctx.reply(
     `Вы подписались на рассылку расписания группы ${ctx.data.group.name}`
@@ -90,11 +88,6 @@ composer.command("unsubscribe", async (ctx) => {
 });
 
 composer.command("schedule", async (ctx) => {
-  if (!ctx.data.group) {
-    await ctx.reply("Группа не найдена");
-    return;
-  }
-
   await sendSchedule(ctx, ctx.data.chat, ctx.data.group);
 });
 
@@ -112,7 +105,7 @@ composer.command("tomorrow", async (ctx) => {
 
 composer.hears(/расписание/, async (ctx) => {
   if (!ctx.data.group) {
-    await ctx.reply("Группа не найдена");
+    await ctx.reply("Группа не найдена или Вы ничего не ввели");
     return;
   }
 
