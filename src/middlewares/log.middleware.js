@@ -3,7 +3,8 @@ const dayjs = require("dayjs");
 module.exports = async (ctx, next) => {
   const date = `[${dayjs().format("HH:mm")}]`;
   const user =
-    ctx.from.username || [ctx.from.first_name, ctx.from.last_name].join(" ");
+    (ctx.from.username || [ctx.from.first_name, ctx.from.last_name].join(" ")) +
+    ":";
   const message = `${ctx.message.text}`;
 
   console.log([date, user, message].join(" "));
