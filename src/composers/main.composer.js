@@ -11,7 +11,10 @@ const {
   sendSchedule,
   getHelpMessage,
   getMessageAllGroups,
+  getMessageSchedule,
+  getSchedule,
 } = require("../helpers/utils");
+const dayjs = require("dayjs");
 
 const composer = new Composer();
 
@@ -110,6 +113,24 @@ composer.command("schedule", async (ctx) => {
   }
 
   await sendSchedule(ctx, chat, group);
+});
+
+composer.command("today", async (ctx) => {
+  const group =
+    (await getGroupFromMessage(ctx.message.text)) ||
+    (await getGroupByChatId(ctx.chat.id));
+  const schedule = await getSchedule(group.id, dayjs());
+
+  await ctx.reply(await getMessageSchedule(schedule, group));
+});
+
+composer.command("tomorrow", async (ctx) => {
+  const group =
+    (await getGroupFromMessage(ctx.message.text)) ||
+    (await getGroupByChatId(ctx.chat.id));
+  const schedule = await getSchedule(group.id, dayjs().add(1, "day"));
+
+  await ctx.reply(await getMessageSchedule(schedule, group));
 });
 
 composer.hears(/расписание/, async (ctx) => {
