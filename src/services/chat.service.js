@@ -23,13 +23,13 @@ class ChatService {
   }
 
   async stopSubscription(chatId) {
-    const chat = await chats.find({ id: chatId });
+    const chat = await chats.findOne({ id: chatId });
 
     if (!chat.subscription?.groupId) {
       return false;
     }
 
-    delete chat.subscription;
+    chat.subscription = null;
     await chat.save();
 
     return true;
