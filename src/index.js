@@ -25,6 +25,10 @@ const start = async () => {
     bot.on("text", require("./middlewares/log.middleware"));
     bot.use(require("./middlewares/chat.middleware"));
     bot.use(require("./middlewares/data.middleware"));
+    bot.command(
+      ["schedule", "today", "tomorrow", "subscribe"],
+      require("./middlewares/checkGroup.middleware")
+    );
     bot.use(require("./composers/main.composer"));
     bot.on("message", async (ctx, next) => {
       if (ctx.chat.type === "private") await ctx.reply("Я тебя не понимаю");
