@@ -25,6 +25,8 @@
   },
   "devDependencies": {
     "eslint": "^8.23.0",
-    "nodemon": "^2.0.19"
+    "eslint-plugin-prettier": "^4.2.1",
+    "nodemon": "^2.0.19",
+    "prettier": "2.7.1"
   }
 }
