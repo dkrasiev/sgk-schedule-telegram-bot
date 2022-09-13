@@ -61,16 +61,24 @@ const start = async () => {
 		});
 
 		bot.on("message", async (ctx, next) => {
-			console.log(
-				`[${dayjs().format("HH:mm")}] ${ctx.from.username || ctx.from.first_name + " " + ctx.from.last_name}: ${ctx.message.text}`
-			);
+			const date = `[${dayjs().format("HH:mm")}]`;
+			const user =
+				ctx.from.username ||
+				[ctx.from.first_name, ctx.from.last_name].join(" ");
+			const message = `${ctx.message.text}`;
+
+			console.log([date, user, message].join(" "));
 
 			next();
 		});
 
 		bot.start(async (ctx) => {
-			await ctx.reply(`Привет, ${ctx.from.first_name}`);
-			await ctx.reply("Чтобы узнать как я работаю, введи команду /help");
+			const message =
+				"Привет, " +
+				ctx.from.first_name +
+				'\n"Чтобы узнать как я работаю, введи команду /help"';
+
+			await ctx.reply(message);
 		});
 
 		bot.help(async (ctx) => {
@@ -78,13 +86,13 @@ const start = async () => {
 
 			const inlineKeyboard = chat.defaultGroup
 				? Markup.inlineKeyboard([
-					Markup.button.callback(
-						"Удалить группу по умолчанию",
-						"remove_default_group"
-					),
-				])
-					.oneTime()
-					.resize()
+						Markup.button.callback(
+							"Удалить группу по умолчанию",
+							"remove_default_group"
+						),
+				  ])
+						.oneTime()
+						.resize()
 				: undefined;
 
 			await ctx.reply(await getHelpMessage(ctx.chat.id), inlineKeyboard);
@@ -126,8 +134,8 @@ const start = async () => {
 
 		bot.command("subscribe", async (ctx) => {
 			const group =
-        (await getGroupFromMessage(ctx.message.text)) ||
-        (await getGroupByChatId(ctx.chat.id));
+				(await getGroupFromMessage(ctx.message.text)) ||
+				(await getGroupByChatId(ctx.chat.id));
 
 			if (!group) {
 				await ctx.reply("Группа не найдена или вы ничего не ввели");
@@ -151,8 +159,8 @@ const start = async () => {
 
 		bot.command("schedule", async (ctx) => {
 			const group =
-        (await getGroupFromMessage(ctx.message.text)) ||
-        (await getGroupByChatId(ctx.chat.id));
+				(await getGroupFromMessage(ctx.message.text)) ||
+				(await getGroupByChatId(ctx.chat.id));
 			const chat = await chats.findOne({ id: ctx.chat.id });
 
 			if (!group) {
@@ -165,8 +173,8 @@ const start = async () => {
 
 		bot.hears(/расписание/, async (ctx) => {
 			const group =
-        (await getGroupFromMessage(ctx.message.text)) ||
-        (await getGroupByChatId(ctx.chat.id));
+				(await getGroupFromMessage(ctx.message.text)) ||
+				(await getGroupByChatId(ctx.chat.id));
 			const chat = await chats.findOne({ id: ctx.chat.id });
 
 			if (!group) {
@@ -259,7 +267,7 @@ async function checkSchedule() {
 
 		if (
 			!compareSchedule(lastSchedule, newSchedule) &&
-      newSchedule?.lessons?.length
+			newSchedule?.lessons?.length
 		) {
 			chat.subscription.lastSchedule = newSchedule;
 			await chat.save();
