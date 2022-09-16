@@ -1,17 +1,16 @@
 require("dotenv").config();
 
-const { default: axios } = require("axios");
 const dayjs = require("dayjs");
 const mongoose = require("mongoose");
 
 const bot = require("./bot");
-const { GROUPS_API } = require("./helpers/api");
 const { groups, chats } = require("./models");
 const {
   getNextWorkDate,
   getSchedule,
   compareSchedule,
   getMessageSchedule,
+  getGroups,
 } = require("./helpers/utils");
 
 const start = async () => {
@@ -93,12 +92,10 @@ async function checkSchedule() {
 }
 
 async function fetchGroups() {
-  const fetchedGroups = (await axios.get(GROUPS_API)).data.filter(
-    (group) => group.name !== "--"
-  );
+  const fetchedGroups = await getGroups();
 
   if (fetchedGroups?.length) {
     await groups.deleteMany();
-    await groups.insertMany(fetchedGroups);
+    await groups.insertMany(groups);
   }
 }

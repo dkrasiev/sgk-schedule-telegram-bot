@@ -1,7 +1,7 @@
 const { default: axios } = require("axios");
 const dayjs = require("dayjs");
 const { chats, groups } = require("../models");
-const { SCHEDULE_API } = require("./api");
+const { SCHEDULE_API, GROUPS_API } = require("./api");
 
 async function sendSchedule(ctx, chat, group) {
   if (!chat) {
@@ -21,6 +21,14 @@ async function sendSchedule(ctx, chat, group) {
 
   await ctx.reply(await getMessageSchedule(scheduleToday, group));
   await ctx.reply(await getMessageSchedule(scheduleNext, group));
+}
+
+async function getGroups() {
+  const groups = (await axios.get(GROUPS_API)).data.filter(
+    (group) => group.name !== "--"
+  );
+
+  return groups;
 }
 
 function getNextWorkDate(date) {
@@ -144,4 +152,5 @@ module.exports = {
   getHelpMessage,
   getMessageAllGroups,
   getMessageSchedule,
+  getGroups,
 };
