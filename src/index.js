@@ -93,9 +93,9 @@ async function checkSchedule() {
 }
 
 async function fetchGroups() {
-  const fetchedGroups = (await axios.get(GROUPS_API)).data.filter(
-      (group) => group.name !== '--',
-  ).sort((a, b) => a.name.localeCompare(b.name));
+  const fetchedGroups = (await axios.get(GROUPS_API)).data
+      .filter((group) => group.name !== '--')
+      .sort((a, b) => a.name.localeCompare(b.name));
 
   if (fetchedGroups?.length) {
     await groups.deleteMany();
