@@ -1,15 +1,15 @@
-const {default: axios} = require('axios');
+const { default: axios } = require('axios');
 const dayjs = require('dayjs');
-const {chats, groups} = require('../models');
-const {SCHEDULE_API} = require('./api');
+const { chats, groups } = require('../models');
+const { SCHEDULE_API } = require('./api');
 
 async function sendSchedule(ctx, chat, group) {
   if (!chat) {
-    chat = await chats.findOne({id: ctx.chat.id});
+    chat = await chats.findOne({ id: ctx.chat.id });
   }
 
   if (!group) {
-    group = await groups.findOne({id: chat.defaultGroup});
+    group = await groups.findOne({ id: chat.defaultGroup });
   }
 
   const currentDate = dayjs();
@@ -59,8 +59,8 @@ async function getGroupFromMessage(message) {
 }
 
 async function getGroupByChatId(chatId) {
-  const chat = await chats.findOne({id: chatId});
-  const group = await groups.findOne({id: chat?.defaultGroup});
+  const chat = await chats.findOne({ id: chatId });
+  const group = await groups.findOne({ id: chat?.defaultGroup });
 
   return group;
 }
@@ -117,8 +117,8 @@ async function getMessageSchedule(schedule, group) {
 }
 
 async function getHelpMessage(chatId) {
-  const chat = await chats.findOne({id: chatId});
-  const defaultGroup = await groups.findOne({id: chat.defaultGroup});
+  const chat = await chats.findOne({ id: chatId });
+  const defaultGroup = await groups.findOne({ id: chat.defaultGroup });
 
   let message =
     'Для получения расписания напишите:' +

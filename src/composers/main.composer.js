@@ -1,4 +1,4 @@
-const {Composer, Markup} = require('telegraf');
+const { Composer, Markup } = require('telegraf');
 
 const {
   startSubscription,

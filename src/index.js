@@ -1,12 +1,12 @@
 require('dotenv').config();
 
-const {default: axios} = require('axios');
+const { default: axios } = require('axios');
 const dayjs = require('dayjs');
 const mongoose = require('mongoose');
 
 const bot = require('./bot');
-const {GROUPS_API} = require('./helpers/api');
-const {groups, chats} = require('./models');
+const { GROUPS_API } = require('./helpers/api');
+const { groups, chats } = require('./models');
 const {
   getNextWorkDate,
   getSchedule,
@@ -69,7 +69,7 @@ async function checkSchedule() {
   }
 
   for (const chat of chatsWithSubscription) {
-    const group = await groups.findOne({id: chat.subscription.groupId});
+    const group = await groups.findOne({ id: chat.subscription.groupId });
     const newSchedule = schedules[chat.subscription.groupId];
     const lastSchedule = chat.toObject().subscription.lastSchedule;
 
