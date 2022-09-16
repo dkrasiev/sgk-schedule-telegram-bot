@@ -1,4 +1,4 @@
-const utils = require("../helpers/utils");
+const utils = require("../src/helpers/utils");
 const dayjs = require("dayjs");
 const { default: axios } = require("axios");
 
