@@ -13,6 +13,5 @@
   "rules": {
     "require-jsdoc": "off",
     "object-curly-spacing": ["warn", "always"]
-
   }
 }
