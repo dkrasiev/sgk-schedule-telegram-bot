@@ -1,7 +1,7 @@
-const { Schema, model } = require("mongoose");
+const {Schema, model} = require('mongoose');
 
 const ChatSchema = new Schema({
-  id: { type: Number, require: true },
+  id: {type: Number, require: true},
   defaultGroup: Number,
   subscription: {
     groupId: Number,
@@ -21,4 +21,4 @@ const ChatSchema = new Schema({
   },
 });
 
-module.exports = model("Chat", ChatSchema);
+module.exports = model('Chat', ChatSchema);

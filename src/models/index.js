@@ -1,4 +1,4 @@
-const chats = require("../models/chat.model");
-const groups = require("../models/group.model");
+const chats = require('../models/chat.model');
+const groups = require('../models/group.model');
 
-module.exports = { chats, groups };
+module.exports = {chats, groups};

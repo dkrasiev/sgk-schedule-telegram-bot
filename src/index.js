@@ -1,18 +1,18 @@
-require("dotenv").config();
+require('dotenv').config();
 
-const { default: axios } = require("axios");
-const dayjs = require("dayjs");
-const mongoose = require("mongoose");
+const {default: axios} = require('axios');
+const dayjs = require('dayjs');
+const mongoose = require('mongoose');
 
-const bot = require("./bot");
-const { GROUPS_API } = require("./helpers/api");
-const { groups, chats } = require("./models");
+const bot = require('./bot');
+const {GROUPS_API} = require('./helpers/api');
+const {groups, chats} = require('./models');
 const {
   getNextWorkDate,
   getSchedule,
   compareSchedule,
   getMessageSchedule,
-} = require("./helpers/utils");
+} = require('./helpers/utils');
 
 const start = async () => {
   try {
@@ -22,23 +22,23 @@ const start = async () => {
 
     setInterval(checkSchedule, 1800 * 1000);
 
-    bot.on("text", require("./middlewares/log.middleware"));
-    bot.use(require("./middlewares/chat.middleware"));
-    bot.use(require("./middlewares/data.middleware"));
+    bot.on('text', require('./middlewares/log.middleware'));
+    bot.use(require('./middlewares/chat.middleware'));
+    bot.use(require('./middlewares/data.middleware'));
     bot.command(
-      ["schedule", "today", "tomorrow", "subscribe"],
-      require("./middlewares/checkGroup.middleware")
+        ['schedule', 'today', 'tomorrow', 'subscribe'],
+        require('./middlewares/checkGroup.middleware'),
     );
-    bot.use(require("./composers/main.composer"));
-    bot.on("message", async (ctx, next) => {
-      if (ctx.chat.type === "private") await ctx.reply("Я тебя не понимаю");
+    bot.use(require('./composers/main.composer'));
+    bot.on('message', async (ctx, next) => {
+      if (ctx.chat.type === 'private') await ctx.reply('Я тебя не понимаю');
 
       next();
     });
 
     // Enable graceful stop
-    process.once("SIGINT", () => bot.stop("SIGINT"));
-    process.once("SIGTERM", () => bot.stop("SIGTERM"));
+    process.once('SIGINT', () => bot.stop('SIGINT'));
+    process.once('SIGTERM', () => bot.stop('SIGTERM'));
   } catch (error) {
     console.log(error);
   }
@@ -48,28 +48,28 @@ start();
 
 async function checkSchedule() {
   console.log(
-    "\x1b[34m%s\x1b[0m",
-    `[${dayjs().format("HH:mm")}] checking schedule...`
+      '\x1b[34m%s\x1b[0m',
+      `[${dayjs().format('HH:mm')}] checking schedule...`,
   );
 
   const allChats = await chats.find();
   const chatsWithSubscription = allChats.filter(
-    (chat) => chat.subscription.groupId
+      (chat) => chat.subscription.groupId,
   );
   const groupIds = new Set(
-    chatsWithSubscription.map((chat) => chat.subscription.groupId)
+      chatsWithSubscription.map((chat) => chat.subscription.groupId),
   );
 
   const schedules = {};
   for (const groupId of groupIds) {
-    const dateNext = getNextWorkDate(dayjs().add(1, "day"));
+    const dateNext = getNextWorkDate(dayjs().add(1, 'day'));
     const schedule = await getSchedule(groupId, dateNext);
 
     schedules[groupId] = schedule;
   }
 
   for (const chat of chatsWithSubscription) {
-    const group = await groups.findOne({ id: chat.subscription.groupId });
+    const group = await groups.findOne({id: chat.subscription.groupId});
     const newSchedule = schedules[chat.subscription.groupId];
     const lastSchedule = chat.toObject().subscription.lastSchedule;
 
@@ -86,7 +86,7 @@ async function checkSchedule() {
 
       const message = await getMessageSchedule(newSchedule, group);
 
-      await bot.telegram.sendMessage(chat.id, "Вышло новое расписание!");
+      await bot.telegram.sendMessage(chat.id, 'Вышло новое расписание!');
       await bot.telegram.sendMessage(chat.id, message);
     }
   }
@@ -94,7 +94,7 @@ async function checkSchedule() {
 
 async function fetchGroups() {
   const fetchedGroups = (await axios.get(GROUPS_API)).data.filter(
-    (group) => group.name !== "--"
+      (group) => group.name !== '--',
   );
 
   if (fetchedGroups?.length) {
